@@ -1,0 +1,1539 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Lançamentos | Flora</title>
+
+    <style>
+        :root {
+            --bg: #17191d;
+            --panel: #22252b;
+            --panel-light: #2b2f37;
+            --border: #3a3f49;
+            --text: #f1f3f5;
+            --muted: #a4aab5;
+            --primary: #78a9ff;
+            --primary-hover: #5d95f4;
+            --green: #48c78e;
+            --red: #ff6b6b;
+            --orange: #ffbd69;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .header-actions,
+        .actions,
+        .filters,
+        .tabs {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            border: 1px solid var(--border);
+            background: var(--panel-light);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 10px 15px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+        }
+
+        .button:hover {
+            filter: brightness(1.15);
+        }
+
+        .button-primary {
+            background: var(--primary);
+            color: #10151d;
+            border-color: var(--primary);
+            font-weight: 700;
+        }
+
+        .button-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .button-success {
+            background: #204b3b;
+            border-color: #34775b;
+            color: #baf3d6;
+        }
+
+        .button-danger {
+            background: #4c292d;
+            border-color: #773c43;
+            color: #ffb7bd;
+        }
+
+        .button-small {
+            padding: 7px 10px;
+            font-size: 12px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px;
+            margin-bottom: 22px;
+        }
+
+        .panel h2 {
+            margin: 0 0 8px;
+            font-size: 19px;
+        }
+
+        .panel-description {
+            color: var(--muted);
+            font-size: 13px;
+            margin: 0 0 20px;
+        }
+
+        .tabs {
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 22px;
+        }
+
+        .tab {
+            padding: 13px 17px;
+            background: transparent;
+            color: var(--muted);
+            border: 0;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            font-weight: 700;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 17px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            min-width: 0;
+        }
+
+        .field-full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 13px;
+            color: #d5d9e0;
+            font-weight: 600;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 11px 12px;
+            background: #191c21;
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--primary);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 85px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filters {
+            margin-bottom: 17px;
+        }
+
+        .filters input,
+        .filters select {
+            width: auto;
+            min-width: 170px;
+            flex: 1;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        table {
+            width: 100%;
+            min-width: 1050px;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 13px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #2b2f37;
+            color: #c6ccd6;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        td {
+            color: #e4e7ec;
+        }
+
+        tbody tr:hover {
+            background: #292d34;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-pending {
+            color: #ffe0a3;
+            background: #493b22;
+        }
+
+        .status-done {
+            color: #b8f3d2;
+            background: #214637;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .empty {
+            padding: 35px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .notice {
+            display: none;
+            margin-bottom: 18px;
+            padding: 13px 15px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            font-size: 14px;
+        }
+
+        .notice.success {
+            display: block;
+            background: #1e3b30;
+            border-color: #34775b;
+            color: #baf3d6;
+        }
+
+        .notice.error {
+            display: block;
+            background: #44272b;
+            border-color: #773c43;
+            color: #ffc0c5;
+        }
+
+        .notice.info {
+            display: block;
+            background: #25364c;
+            border-color: #3d5e85;
+            color: #c6ddff;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .user-info {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 850px) {
+            body {
+                padding: 14px;
+            }
+
+            .form-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .panel {
+                padding: 16px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .field-full {
+                grid-column: auto;
+            }
+
+            .header h1 {
+                font-size: 23px;
+            }
+
+            .header-actions,
+            .header-actions .button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <header class="header">
+        <div>
+            <h1>Lançamentos · Flora</h1>
+            <p class="subtitle">
+                Controle operacional de recebimentos e saídas.
+            </p>
+        </div>
+
+        <div class="header-actions">
+            <span class="user-info">
+                Usuário: {{ usuario_logado | default('Usuário') }}
+            </span>
+
+            <a class="button" href="/dashboard/flora">
+                ← Dashboard
+            </a>
+
+            <button class="button" onclick="atualizar()">
+                ↻ Atualizar dados
+            </button>
+
+            <button class="button button-primary" onclick="exportarExcel()">
+                ↓ Exportar Excel
+            </button>
+        </div>
+    </header>
+
+    <div id="mensagem" class="notice" role="status"></div>
+
+    <section class="panel">
+        <div class="tabs">
+            <button
+                class="tab active"
+                id="tab-recebimento"
+                onclick="trocarAba('recebimento')">
+                Recebimento
+            </button>
+
+            <button
+                class="tab"
+                id="tab-expedicao"
+                onclick="trocarAba('expedicao')">
+                Registrar saída
+            </button>
+        </div>
+
+        <!-- FORMULÁRIO DE RECEBIMENTO -->
+        <div id="form-recebimento">
+            <h2 id="titulo-recebimento">Novo recebimento</h2>
+
+            <p class="panel-description">
+                Preencha os dados da carga recebida.
+            </p>
+
+            <form id="recebimento-form">
+                <input type="hidden" id="recebimento-id">
+
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="data_recebimento">Data do recebimento *</label>
+                        <input
+                            type="date"
+                            id="data_recebimento"
+                            name="data_recebimento"
+                            required>
+                    </div>
+
+                    <div class="field">
+                        <label for="cliente">Cliente *</label>
+                        <input
+                            type="text"
+                            id="cliente"
+                            name="cliente"
+                            placeholder="Nome do cliente"
+                            required>
+                    </div>
+
+                    <div class="field">
+                        <label for="no_cte">Número do CTE *</label>
+                        <input
+                            type="text"
+                            id="no_cte"
+                            name="no_cte"
+                            placeholder="Número do CTE"
+                            required>
+                    </div>
+
+                    <div class="field">
+                        <label for="no_nota_fiscal">Nota fiscal *</label>
+                        <input
+                            type="text"
+                            id="no_nota_fiscal"
+                            name="no_nota_fiscal"
+                            placeholder="Número da nota fiscal"
+                            required>
+                    </div>
+
+                    <div class="field">
+                        <label for="quantidade_paletes">Quantidade de paletes *</label>
+                        <input
+                            type="number"
+                            id="quantidade_paletes"
+                            name="quantidade_paletes"
+                            min="0"
+                            step="1"
+                            placeholder="0"
+                            required>
+                    </div>
+
+                    <div class="field">
+                        <label for="rota_destino">Rota / destino</label>
+                        <input
+                            type="text"
+                            id="rota_destino"
+                            name="rota_destino"
+                            placeholder="Rota ou destino">
+                    </div>
+
+                    <div class="field field-full">
+                        <label for="observacao">Observação</label>
+                        <textarea
+                            id="observacao"
+                            name="observacao"
+                            placeholder="Informações adicionais"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="button button-primary" id="btn-salvar-recebimento">
+                        Salvar recebimento
+                    </button>
+
+                    <button
+                        type="button"
+                        class="button"
+                        onclick="limparFormularioRecebimento()">
+                        Limpar campos
+                    </button>
+
+                    <button
+                        type="button"
+                        class="button hidden"
+                        id="btn-cancelar-edicao"
+                        onclick="cancelarEdicao()">
+                        Cancelar edição
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- FORMULÁRIO DE SAÍDA -->
+        <div id="form-expedicao" class="hidden">
+            <h2>Registrar saída</h2>
+
+            <p class="panel-description">
+                Localize um recebimento pendente e registre a coleta.
+            </p>
+
+            <form id="expedicao-form">
+                <div class="form-grid">
+                    <div class="field field-full">
+                        <label for="expedicao-lancamento">Recebimento pendente *</label>
+                        <select id="expedicao-lancamento" required>
+                            <option value="">Carregando recebimentos pendentes...</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="data_coleta_saida">Data da coleta *</label>
+                        <input type="date" id="data_coleta_saida" required>
+                    </div>
+
+                    <div class="field field-full">
+                        <label for="observacao_saida">Observação da saída</label>
+                        <textarea
+                            id="observacao_saida"
+                            placeholder="Informações sobre a coleta"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="button button-success">
+                        Confirmar saída
+                    </button>
+
+                    <button
+                        type="button"
+                        class="button"
+                        onclick="carregarPendentes()">
+                        ↻ Atualizar pendentes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- TABELA -->
+    <section class="panel">
+        <h2 id="titulo-lista">Recebimentos registrados</h2>
+
+        <p class="panel-description" id="descricao-lista">
+            Consulte, pesquise, edite ou exclua os lançamentos.
+        </p>
+
+        <div class="filters">
+            <input
+                type="search"
+                id="busca"
+                placeholder="Pesquisar cliente, CTE, nota fiscal..."
+                oninput="renderizarTabela()">
+
+            <select id="filtro-status" onchange="renderizarTabela()">
+                <option value="">Todos os status</option>
+                <option value="pendente">Pendente</option>
+                <option value="concluido">Com saída registrada</option>
+            </select>
+
+            <button class="button" onclick="atualizar()">
+                Atualizar
+            </button>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead id="tabela-cabecalho"></thead>
+                <tbody id="tabela-corpo">
+                    <tr>
+                        <td colspan="9" class="empty">Carregando dados...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<script>
+    const API = "/api/flora";
+
+    let tipoAtual = "recebimento";
+    let recebimentos = [];
+    let expedicoes = [];
+    let pendentes = [];
+
+    let carregando = false;
+
+    // =====================================================
+    // FUNÇÕES GERAIS
+    // =====================================================
+
+    function mostrarMensagem(texto, tipo = "info") {
+        const elemento = document.getElementById("mensagem");
+
+        elemento.textContent = texto;
+        elemento.className = "notice " + tipo;
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        if (tipo !== "error") {
+            setTimeout(() => {
+                elemento.className = "notice";
+                elemento.textContent = "";
+            }, 5000);
+        }
+    }
+
+    async function requisicao(url, opcoes = {}) {
+        const config = {
+            credentials: "same-origin",
+            ...opcoes,
+            headers: {
+                ...(opcoes.body ? { "Content-Type": "application/json" } : {}),
+                ...(opcoes.headers || {})
+            }
+        };
+
+        let resposta;
+
+        try {
+            resposta = await fetch(url, config);
+        } catch (erro) {
+            throw new Error(
+                "Não foi possível conectar ao servidor. Verifique sua conexão."
+            );
+        }
+
+        const texto = await resposta.text();
+        let resultado = {};
+
+        if (texto) {
+            try {
+                resultado = JSON.parse(texto);
+            } catch {
+                resultado = { mensagem: texto };
+            }
+        }
+
+        if (!resposta.ok) {
+            if (resposta.status === 401 || resposta.status === 403) {
+                throw new Error(
+                    "Acesso não autorizado. Verifique seu login e as permissões da empresa."
+                );
+            }
+
+            throw new Error(
+                resultado.erro ||
+                resultado.error ||
+                resultado.mensagem ||
+                `Erro HTTP ${resposta.status}`
+            );
+        }
+
+        return resultado;
+    }
+
+    function extrairLista(resultado) {
+        if (Array.isArray(resultado)) return resultado;
+        if (Array.isArray(resultado.dados)) return resultado.dados;
+        if (Array.isArray(resultado.items)) return resultado.items;
+        if (Array.isArray(resultado.resultados)) return resultado.resultados;
+        if (Array.isArray(resultado.recebimentos)) return resultado.recebimentos;
+        if (Array.isArray(resultado.expedicoes)) return resultado.expedicoes;
+        if (Array.isArray(resultado.pendentes)) return resultado.pendentes;
+
+        return [];
+    }
+
+    function valor(objeto, ...chaves) {
+        for (const chave of chaves) {
+            if (
+                objeto &&
+                objeto[chave] !== undefined &&
+                objeto[chave] !== null
+            ) {
+                return objeto[chave];
+            }
+        }
+
+        return "";
+    }
+
+    function escapar(texto) {
+        return String(texto ?? "").replace(/[&<>"']/g, caractere => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[caractere]);
+    }
+
+    function dataHoje() {
+        const agora = new Date();
+        const ano = agora.getFullYear();
+        const mes = String(agora.getMonth() + 1).padStart(2, "0");
+        const dia = String(agora.getDate()).padStart(2, "0");
+
+        return `${ano}-${mes}-${dia}`;
+    }
+
+    function dataISO(data) {
+        if (!data) return "";
+
+        const texto = String(data);
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
+            return texto;
+        }
+
+        const match = texto.match(/^(\d{4}-\d{2}-\d{2})/);
+
+        if (match) return match[1];
+
+        return "";
+    }
+
+    function dataFmt(data) {
+        const iso = dataISO(data);
+
+        if (!iso) return data || "—";
+
+        const [ano, mes, dia] = iso.split("-");
+        return `${dia}/${mes}/${ano}`;
+    }
+
+    function idRegistro(item) {
+        return valor(item, "id", "ID", "rowid", "ROWID");
+    }
+
+    function clienteRegistro(item) {
+        return valor(item, "cliente", "CLIENTE");
+    }
+
+    function cteRegistro(item) {
+        return valor(item, "no_cte", "numero_cte", "cte", "NO_CTE");
+    }
+
+    function notaRegistro(item) {
+        return valor(
+            item,
+            "no_nota_fiscal",
+            "nota_fiscal",
+            "numero_nota_fiscal",
+            "NO_NOTA_FISCAL"
+        );
+    }
+
+    function paletesRegistro(item) {
+        return valor(
+            item,
+            "quantidade_paletes",
+            "qtd_paletes",
+            "paletes",
+            "QUANTIDADE_PALETES"
+        );
+    }
+
+    function dataRecebimento(item) {
+        return valor(
+            item,
+            "data_recebimento",
+            "data",
+            "DATA_RECEBIMENTO"
+        );
+    }
+
+    function dataSaida(item) {
+        return valor(
+            item,
+            "data_coleta_saida",
+            "data_saida",
+            "DATA_COLETA_SAIDA"
+        );
+    }
+
+    function temSaida(item) {
+        const saida = dataSaida(item);
+        const check = valor(item, "check_saida", "CHECK_SAIDA");
+
+        return Boolean(saida) ||
+            ["1", "true", "sim", "s", "ok"].includes(
+                String(check).toLowerCase()
+            );
+    }
+
+    // =====================================================
+    // ABAS
+    // =====================================================
+
+    function trocarAba(tipo) {
+        tipoAtual = tipo;
+
+        const recebimento = tipo === "recebimento";
+
+        document.getElementById("form-recebimento")
+            .classList.toggle("hidden", !recebimento);
+
+        document.getElementById("form-expedicao")
+            .classList.toggle("hidden", recebimento);
+
+        document.getElementById("tab-recebimento")
+            .classList.toggle("active", recebimento);
+
+        document.getElementById("tab-expedicao")
+            .classList.toggle("active", !recebimento);
+
+        document.getElementById("titulo-lista").textContent =
+            recebimento
+                ? "Recebimentos registrados"
+                : "Saídas registradas";
+
+        document.getElementById("descricao-lista").textContent =
+            recebimento
+                ? "Consulte, pesquise, edite ou exclua os recebimentos."
+                : "Consulte as saídas registradas e os dados das coletas.";
+
+        document.getElementById("filtro-status")
+            .classList.toggle("hidden", !recebimento);
+
+        document.getElementById("filtro-status").value = "";
+
+        renderizarTabela();
+
+        if (!recebimento) {
+            carregarPendentes();
+        }
+    }
+
+    // =====================================================
+    // RECEBIMENTOS
+    // =====================================================
+
+    function limparFormularioRecebimento() {
+        document.getElementById("recebimento-form").reset();
+        document.getElementById("recebimento-id").value = "";
+        document.getElementById("data_recebimento").value = dataHoje();
+
+        document.getElementById("titulo-recebimento").textContent =
+            "Novo recebimento";
+
+        document.getElementById("btn-salvar-recebimento").textContent =
+            "Salvar recebimento";
+
+        document.getElementById("btn-cancelar-edicao")
+            .classList.add("hidden");
+    }
+
+    function cancelarEdicao() {
+        limparFormularioRecebimento();
+        mostrarMensagem("Edição cancelada.", "info");
+    }
+
+    document.getElementById("recebimento-form")
+        .addEventListener("submit", async evento => {
+            evento.preventDefault();
+
+            const id = document.getElementById("recebimento-id").value;
+
+            const dados = {
+                data_recebimento:
+                    document.getElementById("data_recebimento").value,
+
+                cliente:
+                    document.getElementById("cliente").value.trim(),
+
+                no_cte:
+                    document.getElementById("no_cte").value.trim(),
+
+                no_nota_fiscal:
+                    document.getElementById("no_nota_fiscal").value.trim(),
+
+                quantidade_paletes:
+                    Number(document.getElementById("quantidade_paletes").value),
+
+                rota_destino:
+                    document.getElementById("rota_destino").value.trim(),
+
+                observacao:
+                    document.getElementById("observacao").value.trim()
+            };
+
+            if (
+                !dados.data_recebimento ||
+                !dados.cliente ||
+                !dados.no_cte ||
+                !dados.no_nota_fiscal
+            ) {
+                mostrarMensagem(
+                    "Preencha todos os campos obrigatórios.",
+                    "error"
+                );
+                return;
+            }
+
+            if (
+                !Number.isFinite(dados.quantidade_paletes) ||
+                dados.quantidade_paletes < 0
+            ) {
+                mostrarMensagem(
+                    "Informe uma quantidade de paletes válida.",
+                    "error"
+                );
+                return;
+            }
+
+            try {
+                const url = id
+                    ? `${API}/lancamentos/recebimento/${encodeURIComponent(id)}`
+                    : `${API}/lancamentos/recebimento`;
+
+                await requisicao(url, {
+                    method: id ? "PUT" : "POST",
+                    body: JSON.stringify(dados)
+                });
+
+                mostrarMensagem(
+                    id
+                        ? "Recebimento atualizado com sucesso."
+                        : "Recebimento registrado com sucesso.",
+                    "success"
+                );
+
+                limparFormularioRecebimento();
+                await atualizar();
+            } catch (erro) {
+                mostrarMensagem(erro.message, "error");
+            }
+        });
+
+    function editarRecebimento(id) {
+        const item = recebimentos.find(
+            registro => String(idRegistro(registro)) === String(id)
+        );
+
+        if (!item) {
+            mostrarMensagem(
+                "Não foi possível localizar esse recebimento.",
+                "error"
+            );
+            return;
+        }
+
+        document.getElementById("recebimento-id").value =
+            idRegistro(item);
+
+        document.getElementById("data_recebimento").value =
+            dataISO(dataRecebimento(item));
+
+        document.getElementById("cliente").value =
+            clienteRegistro(item);
+
+        document.getElementById("no_cte").value =
+            cteRegistro(item);
+
+        document.getElementById("no_nota_fiscal").value =
+            notaRegistro(item);
+
+        document.getElementById("quantidade_paletes").value =
+            paletesRegistro(item);
+
+        document.getElementById("rota_destino").value =
+            valor(item, "rota_destino", "destino");
+
+        document.getElementById("observacao").value =
+            valor(item, "observacao");
+
+        document.getElementById("titulo-recebimento").textContent =
+            "Editar recebimento";
+
+        document.getElementById("btn-salvar-recebimento").textContent =
+            "Salvar alterações";
+
+        document.getElementById("btn-cancelar-edicao")
+            .classList.remove("hidden");
+
+        document.getElementById("recebimento-form")
+            .scrollIntoView({ behavior: "smooth", block: "start" });
+
+        trocarAba("recebimento");
+    }
+
+    async function excluirRecebimento(id) {
+        const confirmar = confirm(
+            "Deseja realmente excluir este recebimento? Esta ação não pode ser desfeita."
+        );
+
+        if (!confirmar) return;
+
+        try {
+            await requisicao(
+                `${API}/lancamentos/recebimento/${encodeURIComponent(id)}`,
+                { method: "DELETE" }
+            );
+
+            mostrarMensagem(
+                "Recebimento excluído com sucesso.",
+                "success"
+            );
+
+            await atualizar();
+        } catch (erro) {
+            mostrarMensagem(erro.message, "error");
+        }
+    }
+
+    // =====================================================
+    // SAÍDAS
+    // =====================================================
+
+    document.getElementById("expedicao-form")
+        .addEventListener("submit", async evento => {
+            evento.preventDefault();
+
+            const id = document.getElementById(
+                "expedicao-lancamento"
+            ).value;
+
+            const data = document.getElementById(
+                "data_coleta_saida"
+            ).value;
+
+            const observacao = document.getElementById(
+                "observacao_saida"
+            ).value.trim();
+
+            if (!id || !data) {
+                mostrarMensagem(
+                    "Selecione um recebimento e informe a data da coleta.",
+                    "error"
+                );
+                return;
+            }
+
+            try {
+                await requisicao(
+                    `${API}/lancamentos/expedicao`,
+                    {
+                        method: "POST",
+                        body: JSON.stringify({
+                            id: id,
+                            recebimento_id: id,
+                            data_coleta_saida: data,
+                            observacao: observacao
+                        })
+                    }
+                );
+
+                mostrarMensagem(
+                    "Saída registrada com sucesso.",
+                    "success"
+                );
+
+                document.getElementById("expedicao-form").reset();
+                document.getElementById("data_coleta_saida").value =
+                    dataHoje();
+
+                await atualizar();
+                await carregarPendentes();
+            } catch (erro) {
+                mostrarMensagem(erro.message, "error");
+            }
+        });
+
+    async function carregarPendentes() {
+        const select = document.getElementById("expedicao-lancamento");
+
+        select.innerHTML =
+            '<option value="">Carregando...</option>';
+
+        try {
+            const resultado = await requisicao(
+                `${API}/lancamentos/pendentes?limite=1000`
+            );
+
+            pendentes = extrairLista(resultado);
+
+            if (!pendentes.length) {
+                select.innerHTML =
+                    '<option value="">Nenhum recebimento pendente</option>';
+                return;
+            }
+
+            select.innerHTML =
+                '<option value="">Selecione um recebimento</option>';
+
+            pendentes.forEach(item => {
+                const id = idRegistro(item);
+
+                if (!id) return;
+
+                const option = document.createElement("option");
+                option.value = id;
+
+                option.textContent =
+                    `${clienteRegistro(item) || "Sem cliente"} | ` +
+                    `CTE: ${cteRegistro(item) || "—"} | ` +
+                    `NF: ${notaRegistro(item) || "—"} | ` +
+                    `Paletes: ${paletesRegistro(item) || 0}`;
+
+                select.appendChild(option);
+            });
+
+            if (select.options.length === 1) {
+                select.innerHTML =
+                    '<option value="">Nenhum recebimento pendente</option>';
+            }
+        } catch (erro) {
+            select.innerHTML =
+                '<option value="">Erro ao carregar pendentes</option>';
+
+            mostrarMensagem(
+                "Não foi possível carregar os recebimentos pendentes: " +
+                erro.message,
+                "error"
+            );
+        }
+    }
+
+    async function registrarSaidaDireta(id) {
+        const data = prompt(
+            "Informe a data da coleta (AAAA-MM-DD):",
+            dataHoje()
+        );
+
+        if (data === null) return;
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+            mostrarMensagem(
+                "Informe a data no formato AAAA-MM-DD.",
+                "error"
+            );
+            return;
+        }
+
+        const observacao = prompt("Observação da saída:", "");
+
+        if (observacao === null) return;
+
+        try {
+            await requisicao(
+                `${API}/lancamentos/expedicao`,
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        id: id,
+                        recebimento_id: id,
+                        data_coleta_saida: data,
+                        observacao: observacao
+                    })
+                }
+            );
+
+            mostrarMensagem("Saída registrada com sucesso.", "success");
+            await atualizar();
+            await carregarPendentes();
+        } catch (erro) {
+            mostrarMensagem(erro.message, "error");
+        }
+    }
+
+    async function editarSaida(id) {
+        const item = expedicoes.find(
+            registro => String(idRegistro(registro)) === String(id)
+        );
+
+        if (!item) {
+            mostrarMensagem(
+                "Não foi possível localizar a saída.",
+                "error"
+            );
+            return;
+        }
+
+        const dataAtual = dataISO(dataSaida(item)) || dataHoje();
+
+        const data = prompt(
+            "Nova data da coleta (AAAA-MM-DD):",
+            dataAtual
+        );
+
+        if (data === null) return;
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+            mostrarMensagem(
+                "Informe a data no formato AAAA-MM-DD.",
+                "error"
+            );
+            return;
+        }
+
+        const observacaoAtual = valor(item, "observacao", "observacao_saida");
+        const observacao = prompt(
+            "Observação da saída:",
+            observacaoAtual
+        );
+
+        if (observacao === null) return;
+
+        try {
+            await requisicao(
+                `${API}/lancamentos/expedicao/${encodeURIComponent(id)}`,
+                {
+                    method: "PUT",
+                    body: JSON.stringify({
+                        data_coleta_saida: data,
+                        observacao: observacao
+                    })
+                }
+            );
+
+            mostrarMensagem("Saída atualizada com sucesso.", "success");
+            await atualizar();
+        } catch (erro) {
+            mostrarMensagem(erro.message, "error");
+        }
+    }
+
+    async function excluirSaida(id) {
+        if (!confirm("Deseja realmente excluir este registro de saída?")) {
+            return;
+        }
+
+        try {
+            await requisicao(
+                `${API}/lancamentos/expedicao/${encodeURIComponent(id)}`,
+                { method: "DELETE" }
+            );
+
+            mostrarMensagem(
+                "Saída excluída com sucesso.",
+                "success"
+            );
+
+            await atualizar();
+            await carregarPendentes();
+        } catch (erro) {
+            mostrarMensagem(erro.message, "error");
+        }
+    }
+
+    // =====================================================
+    // CARREGAMENTO
+    // =====================================================
+
+    async function carregarRecebimentos() {
+        const resultado = await requisicao(
+            `${API}/lancamentos/recebimento?limite=200`
+        );
+
+        recebimentos = extrairLista(resultado);
+    }
+
+    async function carregarExpedicoes() {
+        const resultado = await requisicao(
+            `${API}/lancamentos/expedicao?limite=200`
+        );
+
+        expedicoes = extrairLista(resultado);
+    }
+
+    async function atualizar() {
+        if (carregando) return;
+
+        carregando = true;
+        document.querySelector(".container").classList.add("loading");
+
+        try {
+            await Promise.all([
+                carregarRecebimentos(),
+                carregarExpedicoes()
+            ]);
+
+            renderizarTabela();
+
+            if (tipoAtual === "expedicao") {
+                await carregarPendentes();
+            }
+        } catch (erro) {
+            mostrarMensagem(
+                "Erro ao atualizar os dados: " + erro.message,
+                "error"
+            );
+        } finally {
+            carregando = false;
+            document.querySelector(".container").classList.remove("loading");
+        }
+    }
+
+    // =====================================================
+    // TABELAS
+    // =====================================================
+
+    function renderizarTabela() {
+        const cabecalho = document.getElementById("tabela-cabecalho");
+        const corpo = document.getElementById("tabela-corpo");
+
+        const busca = document.getElementById("busca")
+            .value.trim().toLowerCase();
+
+        const filtroStatus = document.getElementById("filtro-status").value;
+
+        const registros = tipoAtual === "recebimento"
+            ? recebimentos
+            : expedicoes;
+
+        if (tipoAtual === "recebimento") {
+            cabecalho.innerHTML = `
+                <tr>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>CTE</th>
+                    <th>Nota fiscal</th>
+                    <th>Paletes</th>
+                    <th>Destino</th>
+                    <th>Status</th>
+                    <th>Observação</th>
+                    <th>Ações</th>
+                </tr>
+            `;
+        } else {
+            cabecalho.innerHTML = `
+                <tr>
+                    <th>Data recebimento</th>
+                    <th>Data saída</th>
+                    <th>Cliente</th>
+                    <th>CTE</th>
+                    <th>Nota fiscal</th>
+                    <th>Paletes</th>
+                    <th>Destino</th>
+                    <th>Observação</th>
+                    <th>Ações</th>
+                </tr>
+            `;
+        }
+
+        const filtrados = registros.filter(item => {
+            const texto = [
+                clienteRegistro(item),
+                cteRegistro(item),
+                notaRegistro(item),
+                valor(item, "rota_destino", "destino"),
+                valor(item, "observacao")
+            ].join(" ").toLowerCase();
+
+            if (busca && !texto.includes(busca)) {
+                return false;
+            }
+
+            if (tipoAtual === "recebimento" && filtroStatus) {
+                const saiu = temSaida(item);
+
+                if (filtroStatus === "pendente" && saiu) return false;
+                if (filtroStatus === "concluido" && !saiu) return false;
+            }
+
+            return true;
+        });
+
+        if (!filtrados.length) {
+            corpo.innerHTML = `
+                <tr>
+                    <td colspan="9" class="empty">
+                        Nenhum registro encontrado.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        corpo.innerHTML = filtrados.map(item => {
+            const id = idRegistro(item);
+            const cliente = escapar(clienteRegistro(item));
+            const cte = escapar(cteRegistro(item));
+            const nota = escapar(notaRegistro(item));
+            const paletes = escapar(paletesRegistro(item));
+            const destino = escapar(
+                valor(item, "rota_destino", "destino")
+            );
+            const observacao = escapar(valor(item, "observacao"));
+
+            if (tipoAtual === "recebimento") {
+                const status = temSaida(item)
+                    ? '<span class="status status-done">Saída registrada</span>'
+                    : '<span class="status status-pending">Pendente</span>';
+
+                return `
+                    <tr>
+                        <td>${escapar(dataFmt(dataRecebimento(item)))}</td>
+                        <td>${cliente || "—"}</td>
+                        <td>${cte || "—"}</td>
+                        <td>${nota || "—"}</td>
+                        <td>${paletes || "0"}</td>
+                        <td>${destino || "—"}</td>
+                        <td>${status}</td>
+                        <td>${observacao || "—"}</td>
+                        <td>
+                            <div class="table-actions">
+                                <button
+                                    class="button button-small"
+                                    onclick="editarRecebimento(${JSON.stringify(String(id))})">
+                                    Editar
+                                </button>
+                                <button
+                                    class="button button-danger button-small"
+                                    onclick="excluirRecebimento(${JSON.stringify(String(id))})">
+                                    Excluir
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            const dataEntrada = dataRecebimento(item);
+            const dataSaidaAtual = dataSaida(item);
+
+            return `
+                <tr>
+                    <td>${escapar(dataFmt(dataEntrada))}</td>
+                    <td>${escapar(dataFmt(dataSaidaAtual))}</td>
+                    <td>${cliente || "—"}</td>
+                    <td>${cte || "—"}</td>
+                    <td>${nota || "—"}</td>
+                    <td>${paletes || "0"}</td>
+                    <td>${destino || "—"}</td>
+                    <td>${observacao || "—"}</td>
+                    <td>
+                        <div class="table-actions">
+                            <button
+                                class="button button-small"
+                                onclick="editarSaida(${JSON.stringify(String(id))})">
+                                Editar
+                            </button>
+                            <button
+                                class="button button-danger button-small"
+                                onclick="excluirSaida(${JSON.stringify(String(id))})">
+                                Excluir
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    // =====================================================
+    // EXPORTAÇÃO
+    // =====================================================
+
+    async function exportarExcel() {
+        try {
+            const resposta = await fetch(`${API}/exportar`, {
+                credentials: "same-origin"
+            });
+
+            if (!resposta.ok) {
+                throw new Error(`Erro HTTP ${resposta.status}`);
+            }
+
+            const blob = await resposta.blob();
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "lancamentos_flora.xlsx";
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            URL.revokeObjectURL(url);
+
+            mostrarMensagem(
+                "Exportação solicitada com sucesso.",
+                "success"
+            );
+        } catch (erro) {
+            mostrarMensagem(
+                "Não foi possível exportar: " + erro.message,
+                "error"
+            );
+        }
+    }
+
+    // =====================================================
+    // INICIALIZAÇÃO
+    // =====================================================
+
+    document.getElementById("data_recebimento").value = dataHoje();
+    document.getElementById("data_coleta_saida").value = dataHoje();
+
+    atualizar();
+</script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Dashboard Gerencial | 4Log</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root{--accent:#2B683E;--accent-soft:#e7f1e9;--page:#f2f5f3;--panel:#fff;--text:#1b2920;--muted:#718078;--line:#dce5de;--shadow:0 5px 18px #102b1910}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--page);color:var(--text);font:14px Inter,system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;transition:background .25s,color .25s}
+    body.tema-porto{--accent:#2A2725;--accent-soft:#eceae8;--page:#f3f2f1;--panel:#fff;--text:#282624;--muted:#77716d;--line:#dedbd8}
+    body.tema-sebastian{--accent:#056089;--accent-soft:#e5f2f8;--page:#edf5f8;--panel:#fff;--text:#16313d;--muted:#6d8792;--line:#d5e5eb}
+    body.tema-flora{--accent:#035A80;--accent-soft:#e4f3f8;--page:#eef8fb;--panel:#fff;--text:#173745;--muted:#6e8994;--line:#d6e8ee}
+    body.tema-lego{--accent:#62050a;--accent-soft:#f5eded;--page:#f5f5e8;--panel:#fff;--text:#352526;--muted:#817275;--line:#e4dfce}
+    header{position:sticky;top:0;z-index:10;background:var(--panel);border-bottom:1px solid var(--line);box-shadow:0 2px 10px #00000006;transition:background .25s}
+    .bar{max-width:1480px;margin:auto;padding:13px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;min-width:200px}
+    .logo{height:58px;max-width:180px;object-fit:contain;transition:opacity .2s}
+    .brand-title{line-height:1.35}.brand-title span{display:block;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.12em}
+    .spacer{flex:1}.filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    select,.btn{border:1px solid var(--line);border-radius:8px;padding:9px 12px;font:inherit;cursor:pointer}
+    select{background:var(--panel);color:var(--text)}.btn{background:var(--accent);border-color:var(--accent);color:#fff;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;transition:filter .15s}
+    .btn:hover{filter:brightness(1.12)}.user{display:flex;align-items:center;gap:12px;border-left:1px solid var(--line);padding-left:16px;color:var(--muted)}
+    .logout{color:var(--accent);text-decoration:none;font-weight:800}
+    main{max-width:1480px;margin:auto;padding:24px}
+    h1{font-size:25px;margin-bottom:6px}.intro{color:var(--muted);margin-bottom:20px;line-height:1.5}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 20px}
+    .tab{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:9px;padding:10px 18px;font:inherit;font-weight:750;cursor:pointer;transition:all .2s}
+    .tab:hover{border-color:var(--accent);color:var(--accent)}.tab.ativa{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 20%,transparent)}
+    .painel{display:none}.painel.ativo{display:block}
+    .section-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}.section-logo{width:54px;height:54px;object-fit:contain;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px}.section-head h2{font-size:21px}.section-head p{color:var(--muted);margin-top:4px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:18px}
+    .card,.box{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px;box-shadow:var(--shadow);min-width:0;transition:background .25s,border-color .25s}
+    .card small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.09em;margin-bottom:9px;font-weight:750}.card b{font-size:28px;color:var(--accent);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.card .sub{display:block;color:var(--muted);font-size:11px;margin-top:7px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:16px}.wide{grid-column:1/-1}.box h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:15px;color:var(--muted)}.chart{height:300px;position:relative}
+    .summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.summary-item{padding:14px;border-radius:10px;background:var(--accent-soft)}.summary-item small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}.summary-item strong{font-size:19px;color:var(--accent)}
+    .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:9px}table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line)}th{background:var(--accent-soft);color:var(--accent);font-size:10px;text-transform:uppercase;letter-spacing:.06em}td.num{text-align:right;font-variant-numeric:tabular-nums}.status{color:var(--muted);font-size:12px;margin-top:14px}.dot{display:inline-block;width:7px;height:7px;background:#16a34a;border-radius:50%;margin-right:7px}.error{display:none;background:#fff1f0;color:#b42318;border:1px solid #f2c7c3;padding:13px;border-radius:9px;margin-bottom:14px;line-height:1.5}.empty{color:var(--muted);padding:25px;text-align:center}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.bar{padding:12px 16px}main{padding:16px}.user{border:0;padding:0;width:100%;justify-content:space-between}.brand{min-width:unset}.filters{width:100%}.filters select{flex:1}.summary{grid-template-columns:1fr 1fr}}
+    @media(max-width:520px){.cards{grid-template-columns:1fr 1fr}.card{padding:14px}.card b{font-size:23px}.section-head h2{font-size:18px}.tab{flex:1;padding:10px 8px}.summary{grid-template-columns:1fr}}
+  </style>
+</head>
+<body class="tema-4log">
+<header><div class="bar">
+  <div class="brand"><img id="logoPrincipal" class="logo" src="/static/img/4log.png" alt="Logo 4Log" onerror="this.onerror=null;this.src='/static/img/4log.png'"><div class="brand-title" id="marcaTitulo">4LOG<span>Painel Gerencial</span></div></div>
+  <div class="spacer"></div>
+  <div class="filters"><select id="ano" aria-label="Filtrar por ano"><option value="">Todos os anos</option></select>
+    <select id="mes" aria-label="Filtrar por mês"><option value="">Todos os meses</option><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select>
+    <button class="btn" id="limpar" type="button">Limpar</button><button class="btn" id="atualizar" type="button">↻ Atualizar</button></div>
+  <div class="user"><span>Olá, <strong>{{ usuario_logado }}</strong></span><a class="logout" href="{{ url_for('logout') }}">Sair</a></div>
+</div></header>
+<main>
+  <h1 id="tituloPagina">Visão geral da 4Log</h1><p class="intro" id="introPagina">Selecione uma aba para consultar o resumo operacional individual de cada cliente. As informações respeitam os filtros de ano e mês.</p>
+  <div class="error" id="erro" role="alert"></div>
+  <div class="tabs" id="tabs"><button class="tab ativa" data-aba="geral" type="button">Visão geral</button><button class="tab" data-aba="estoque-xml" type="button">Estoque XML</button></div>
+  <section class="painel ativo" id="painel-geral">
+    <div class="cards">
+      <div class="card"><small>Operações</small><b id="k-clientes">—</b></div>
+      <div class="card"><small>Pallets recebidos</small><b id="k-rec">—</b></div>
+      <div class="card"><small>Pallets expedidos</small><b id="k-exp">—</b></div>
+      <div class="card"><small>Clientes finais atendidos</small><b id="k-finais">—</b></div>
+      <div class="card"><small>Movimentações registradas</small><b id="k-mov">—</b></div>
+    </div>
+    <div class="grid">
+      <section class="box"><h3>Pallets recebidos por cliente</h3><div class="chart"><canvas id="graf-rec"></canvas></div></section>
+      <section class="box"><h3>Pallets expedidos por cliente</h3><div class="chart"><canvas id="graf-exp"></canvas></div></section>
+      <section class="box wide"><h3>Comparativo operacional por cliente</h3><div class="chart"><canvas id="graf-comp"></canvas></div></section>
+      <section class="box wide"><h3>Detalhamento consolidado</h3><div class="tablewrap"><table><thead><tr><th>Cliente</th><th>Período dos dados</th><th>Clientes finais</th><th>Recebidos (pallets)</th><th>Expedidos (pallets)</th><th>Saldo de movimentação</th><th>Movimentações</th><th>Dia de pico no estoque</th><th>Pallets no pico</th></tr></thead><tbody id="linhas"></tbody></table></div><p class="status">Saldo de movimentação = pallets recebidos − pallets expedidos; não representa necessariamente o estoque físico. Pico de estoque = maior saldo acumulado ao fim de um dia (recebidos − expedidos desde o início da base); respeita os filtros de ano e mês.</p></section>
+    </div>
+  </section>
+
+  <section class="painel" id="painel-estoque-xml">
+    <div class="section-head">
+      <div class="section-logo" style="display:grid;place-items:center;font-size:25px">📦</div>
+      <div><h2>Estoque por XML de notas fiscais</h2><p>Importe NF-e de entrada e saída para calcular quantidades e valor estimado dos produtos.</p></div>
+    </div>
+
+    <div class="box" style="margin-bottom:16px">
+      <h3>Importar notas fiscais XML</h3>
+      <form id="form-xml" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;align-items:end">
+        <label style="display:flex;flex-direction:column;gap:7px;font-weight:700;color:var(--muted)">
+          Tipo de movimentação
+          <select id="tipo-xml" name="tipo_movimento" required>
+            <option value="entrada">Entrada no estoque</option>
+            <option value="saida">Saída do estoque</option>
+          </select>
+        </label>
+        <label style="display:flex;flex-direction:column;gap:7px;font-weight:700;color:var(--muted)">
+          Arquivos XML (pode selecionar vários)
+          <input id="arquivos-xml" name="arquivos" type="file" accept=".xml,text/xml,application/xml" multiple required style="border:1px solid var(--line);border-radius:8px;padding:9px;background:var(--panel);color:var(--text);max-width:100%">
+        </label>
+        <button class="btn" id="importar-xml" type="submit" style="min-height:40px">Importar XML</button>
+      </form>
+      <p class="status" id="status-xml">Escolha entrada ou saída conforme o movimento físico da mercadoria. Cada chave de NF-e só pode ser importada uma vez.</p>
+      <div class="error" id="erro-xml" role="alert" style="margin-top:12px"></div>
+      <div id="resultado-xml" style="display:none;margin-top:12px;padding:12px;border-radius:9px;background:var(--accent-soft);line-height:1.6"></div>
+    </div>
+
+    <div class="cards">
+      <div class="card"><small>Valor estimado do estoque</small><b id="xml-valor-estoque">R$ 0,00</b><span class="sub">Custo médio dos XMLs de entrada</span></div>
+      <div class="card"><small>Produtos cadastrados</small><b id="xml-qtd-produtos">0</b></div>
+      <div class="card"><small>Clientes com estoque</small><b id="xml-qtd-clientes">0</b></div>
+      <div class="card"><small>Notas importadas</small><b id="xml-qtd-notas">0</b><span class="sub" id="xml-valor-notas">Valor fiscal total: R$ 0,00</span></div>
+      <div class="card"><small>Produtos com saldo negativo</small><b id="xml-negativos">0</b><span class="sub">Verifique entradas/saídas ou saldo inicial</span></div>
+    </div>
+
+    <section class="box" style="margin-bottom:16px">
+      <h3>Ranking geral — valor estimado por emitente/cliente</h3>
+      <div class="tablewrap"><table style="min-width:780px">
+        <thead><tr><th>Posição</th><th>Cliente / emitente</th><th>CNPJ/CPF</th><th>Notas</th><th>Produtos</th><th>Saldo negativo</th><th>Valor estimado</th><th>Detalhes</th></tr></thead>
+        <tbody id="xml-ranking"><tr><td colspan="8" class="empty">Carregando ranking...</td></tr></tbody>
+      </table></div>
+      <p class="status">O ranking usa o emitente da NF-e como identificação do cliente e ordena do maior para o menor valor estimado.</p>
+    </section>
+
+    <section class="box" style="margin-bottom:16px">
+      <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px">
+        <h3 style="margin:0">Detalhes do estoque por cliente</h3>
+        <select id="xml-cliente-selecionado" aria-label="Selecionar cliente para detalhar" style="min-width:min(100%,320px)"><option value="">Selecione um cliente</option></select>
+      </div>
+      <div class="summary" style="margin-bottom:15px">
+        <div class="summary-item"><small>Cliente selecionado</small><strong id="xml-detalhe-nome">—</strong><div class="status" id="xml-detalhe-cnpj"></div></div>
+        <div class="summary-item"><small>Valor estimado do estoque</small><strong id="xml-detalhe-valor">R$ 0,00</strong><div class="status" id="xml-detalhe-resumo"></div></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px">
+        <h3 style="margin:0">Produtos do cliente selecionado</h3>
+        <input id="buscar-produto-xml" type="search" placeholder="Buscar código ou descrição..." style="border:1px solid var(--line);border-radius:8px;padding:10px;min-width:min(100%,260px);background:var(--panel);color:var(--text)">
+      </div>
+      <div class="tablewrap"><table style="min-width:950px">
+        <thead><tr><th>Código</th><th>Produto</th><th>Unidade</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Custo médio</th><th>Valor estimado</th></tr></thead>
+        <tbody id="xml-itens"><tr><td colspan="8" class="empty">Carregando estoque...</td></tr></tbody>
+      </table></div>
+      <div style="display:flex;justify-content:center;margin-top:12px">
+        <button class="btn" id="xml-toggle-itens" type="button" style="display:none">Mostrar mais</button>
+      </div>
+      <p class="status" id="xml-observacao"></p>
+    </section>
+
+    <section class="box">
+      <h3>Últimas notas importadas</h3>
+      <div class="tablewrap"><table style="min-width:850px">
+        <thead><tr><th>Data</th><th>Número</th><th>Movimento</th><th>Emitente</th><th>Destinatário</th><th>Valor da NF-e</th><th>Ação</th></tr></thead>
+        <tbody id="xml-notas"><tr><td colspan="7" class="empty">Nenhuma nota importada.</td></tr></tbody>
+      </table></div>
+    </section>
+  </section>
+
+  <div id="paineis-clientes"></div>
+  <p class="status"><span class="dot"></span><span id="atualizado">Aguardando dados…</span></p>
+</main>
+<script>
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const fmt=v=>Number(v||0).toLocaleString('pt-BR');
+  const fmtData=d=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(d||'');return m?`${m[3]}/${m[2]}/${m[1]}`:'—';};
+  const fmtMes=ym=>{const m=/^(\d{4})-(\d{2})$/.exec(ym||'');return m?`${m[2]}/${m[1]}`:'—';};
+  const temaCliente={
+    '4log':{classe:'tema-4log',nome:'4Log',logo:'/static/img/4log.png',cor:'#2B683E'},
+    'porto':{classe:'tema-porto',nome:'Porto-Brasil',logo:'/static/img/porto.png',cor:'#2A2725'},
+    'sebastian':{classe:'tema-sebastian',nome:'Sebastian',logo:'/static/img/sebastian.png',cor:'#056089'},
+    'flora':{classe:'tema-flora',nome:'Flora',logo:'/static/img/flora.png',cor:'#035A80'},
+    'lego':{classe:'tema-lego',nome:'Lego Education',logo:'/static/img/lego_education_logo.png',cor:'#62050a'}
+  };
+  let dadosClientes=[], charts={}, abaAtiva='geral';
+  Chart.defaults.font.family='Inter, system-ui, sans-serif';Chart.defaults.color='#718078';Chart.defaults.plugins.legend.labels.boxWidth=11;
+  function graf(id,type,labels,datasets){const el=document.getElementById(id);if(!el)return;if(charts[id])charts[id].destroy();charts[id]=new Chart(el,{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type==='bar'&&datasets.length>1}},scales:type==='doughnut'?{}:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#e5eae6'}}}}});}
+  function setTema(chave){
+    const t=temaCliente[chave]||temaCliente['4log'];
+    document.body.className=t.classe;$('#logoPrincipal').src=t.logo;$('#logoPrincipal').alt='Logo '+t.nome;
+    if(chave==='estoque-xml'){
+      $('#marcaTitulo').innerHTML='4LOG<span>Estoque por XML</span>';
+      $('#tituloPagina').textContent='Estoque por XML de notas fiscais';
+      $('#introPagina').textContent='Importe NF-e para consultar itens, quantidades e valor estimado do estoque.';
+      return;
+    }
+    $('#marcaTitulo').innerHTML=chave==='geral'?'4LOG<span>Painel Gerencial</span>':`${t.nome}<span>Resumo operacional</span>`;
+    $('#tituloPagina').textContent=chave==='geral'?'Visão geral da 4Log':`Resumo operacional — ${t.nome}`;
+    $('#introPagina').textContent=chave==='geral'?'Visão consolidada da operação da 4Log. Selecione a aba de cada cliente para consultar seus indicadores individuais.':'Indicadores da base '+t.nome+'. Use os filtros de ano e mês para analisar períodos específicos.';
+  }
+  function ativarAba(chave){abaAtiva=chave;$$('.tab').forEach(b=>b.classList.toggle('ativa',b.dataset.aba===chave));$$('.painel').forEach(p=>p.classList.toggle('ativo',p.id==='painel-'+chave));setTema(chave);if(chave==='estoque-xml')carregarEstoqueXML();}
+  function criarPainelCliente(c){const chave=String(c.chave||'').replace(/[^a-z0-9_-]/gi,'');if(!chave)return;const t=temaCliente[chave]||temaCliente['4log'];const tabs=$('#tabs');if(!tabs.querySelector(`[data-aba="${chave}"]`)){const b=document.createElement('button');b.className='tab';b.dataset.aba=chave;b.textContent=c.nome;b.type='button';b.addEventListener('click',()=>ativarAba(chave));tabs.appendChild(b);}
+    let sec=document.getElementById('painel-'+chave);if(!sec){sec=document.createElement('section');sec.className='painel';sec.id='painel-'+chave;$('#paineis-clientes').appendChild(sec);}
+    sec.innerHTML=`<div class="section-head"><img class="section-logo" src="${t.logo}" alt="Logo ${c.nome}" onerror="this.style.display='none'"><div><h2>${c.nome}</h2><p>Período disponível: ${c.periodo||'Sem dados no período'}</p></div></div>
+      <div class="cards">
+        <div class="card"><small>Pallets recebidos</small><b>${fmt(c.recebido)}</b><span class="sub">${fmt(c.registros_recebimento)} registros de recebimento</span></div>
+        <div class="card"><small>Pallets expedidos</small><b>${fmt(c.expedido)}</b><span class="sub">${fmt(c.registros_expedicao)} registros de expedição</span></div>
+        <div class="card"><small>Saldo de movimentação</small><b>${fmt(c.saldo_movimentacao)}</b><span class="sub">Recebidos menos expedidos</span></div>
+        <div class="card"><small>Pedidos</small><b>${fmt(c.pedidos)}</b></div>
+        <div class="card"><small>Clientes Atendidos</small><b>${fmt(c.clientes_finais)}</b></div>
+        <div class="card"><small>Movimentações</small><b>${fmt(c.movimentacoes)}</b><span class="sub">Recebimento + expedição</span></div>
+        <div class="card"><small>Pico de estoque (pallets)</small><b>${c.pico_estoque?fmt(c.pico_estoque.pallets):'—'}</b><span class="sub">Base para cobrança</span></div>
+        <div class="card"><small>Dia do pico</small><b style="font-size:22px">${c.pico_estoque?fmtData(c.pico_estoque.data):'—'}</b><span class="sub">Maior estoque no período filtrado</span></div>
+      </div>
+      <div class="grid"><section class="box"><h3>Recebimento x expedição</h3><div class="chart"><canvas id="graf-${chave}"></canvas></div></section>
+      <section class="box"><h3>Resumo do período</h3><div class="summary"><div class="summary-item"><small>Registros de recebimento</small><strong>${fmt(c.registros_recebimento)}</strong></div><div class="summary-item"><small>Registros de expedição</small><strong>${fmt(c.registros_expedicao)}</strong></div><div class="summary-item"><small>Pallets recebidos</small><strong>${fmt(c.recebido)}</strong></div><div class="summary-item"><small>Pallets expedidos</small><strong>${fmt(c.expedido)}</strong></div></div></section></div>
+      <div class="grid"><section class="box wide"><h3>Pico de estoque por mês</h3><div class="tablewrap"><table style="min-width:420px"><thead><tr><th>Mês</th><th>Dia do pico</th><th>Pallets no pico</th></tr></thead><tbody>${(c.pico_estoque_por_mes||[]).map(m=>`<tr><td>${fmtMes(m.mes)}</td><td>${fmtData(m.data)}${m.sem_movimentacao?' <span style="color:var(--muted);font-size:11px">· sem movimentação no mês</span>':''}</td><td class="num">${fmt(m.pallets)}</td></tr>`).join('')||'<tr><td colspan="3" class="empty">Sem movimentação no período.</td></tr>'}</tbody></table></div><p class="status">Saldo ao fim do dia, acumulado desde o início da base. Em caso de empate, vale o dia mais antigo. Se o maior estoque do mês é o que veio do mês anterior, o dia indicado é o dia 1º.</p></section></div>`;
+    graf('graf-'+chave,'bar',['Recebimento','Expedição'],[{label:'Pallets',data:[Number(c.recebido||0),Number(c.expedido||0)],backgroundColor:[t.cor,'#d89b43'],borderRadius:7}]);
+  }
+  async function carregar(){const qs=new URLSearchParams();if($('#ano').value)qs.set('ano',$('#ano').value);if($('#mes').value)qs.set('mes',$('#mes').value);$('#atualizar').disabled=true;$('#atualizado').textContent='Atualizando dados…';
+    try{const r=await fetch('/api/4log/resumo-clientes'+(qs.toString()?'?'+qs:''),{credentials:'same-origin'});if(r.status===401){window.location.href="{{ url_for('login') }}";return;}if(r.status===403)throw new Error('Acesso negado. Entre com um usuário autorizado da 4Log. (HTTP 403)');if(!r.ok)throw new Error('Falha ao consultar a API (HTTP '+r.status+'). Confira o registro do Blueprint e os logs do Flask.');const d=await r.json();dadosClientes=d.clientes||[];$('#erro').style.display='none';
+      const anos=d.anos||[];const anoSel=$('#ano');const atual=anoSel.value;anoSel.innerHTML='<option value="">Todos os anos</option>'+anos.map(a=>`<option value="${a}">${a}</option>`).join('');anoSel.value=atual;
+      $('#k-clientes').textContent=fmt(dadosClientes.length);$('#k-rec').textContent=fmt(dadosClientes.reduce((s,c)=>s+Number(c.recebido||0),0));$('#k-exp').textContent=fmt(dadosClientes.reduce((s,c)=>s+Number(c.expedido||0),0));$('#k-finais').textContent=fmt(dadosClientes.reduce((s,c)=>s+Number(c.clientes_finais||0),0));$('#k-mov').textContent=fmt(dadosClientes.reduce((s,c)=>s+Number(c.movimentacoes||0),0));
+      const labels=dadosClientes.map(c=>c.nome);graf('graf-rec','bar',labels,[{label:'Pallets recebidos',data:dadosClientes.map(c=>c.recebido),backgroundColor:'#4b9870',borderRadius:5}]);graf('graf-exp','bar',labels,[{label:'Pallets expedidos',data:dadosClientes.map(c=>c.expedido),backgroundColor:'#d89b43',borderRadius:5}]);graf('graf-comp','bar',labels,[{label:'Recebidos',data:dadosClientes.map(c=>c.recebido),backgroundColor:'#4b9870',borderRadius:5},{label:'Expedidos',data:dadosClientes.map(c=>c.expedido),backgroundColor:'#d89b43',borderRadius:5}]);
+      $('#linhas').innerHTML=dadosClientes.map(c=>`<tr><td>${c.nome}</td><td>${c.periodo||'—'}</td><td class="num">${fmt(c.clientes_finais)}</td><td class="num">${fmt(c.recebido)}</td><td class="num">${fmt(c.expedido)}</td><td class="num">${fmt(c.saldo_movimentacao)}</td><td class="num">${fmt(c.movimentacoes)}</td><td>${c.pico_estoque?fmtData(c.pico_estoque.data):'—'}</td><td class="num">${c.pico_estoque?fmt(c.pico_estoque.pallets):'—'}</td></tr>`).join('')||'<tr><td colspan="9" class="empty">Nenhuma base de cliente foi encontrada. Confira os caminhos dos bancos no api_4log.py.</td></tr>';
+      dadosClientes.forEach(criarPainelCliente);const validas=new Set(dadosClientes.map(c=>c.chave));if(abaAtiva!=='geral'&&abaAtiva!=='estoque-xml'&&!validas.has(abaAtiva))ativarAba('geral');else ativarAba(abaAtiva);$('#atualizado').textContent='Dados atualizados em '+new Date().toLocaleString('pt-BR');
+    }catch(e){$('#erro').textContent=e.message;$('#erro').style.display='block';$('#atualizado').textContent='Não foi possível atualizar os dados.';}finally{$('#atualizar').disabled=false;}}
+
+  const moeda=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let produtosXML=[], clientesXML=[];
+  let mostrarTodosProdutosXML=false;
+  const LIMITE_PRODUTOS_XML=5;
+  async function carregarEstoqueXML(){
+    const corpo=$('#xml-itens');
+    try{
+      const r=await fetch('/api/4log/estoque-xml/resumo',{credentials:'same-origin'});
+      if(r.status===401){window.location.href="{{ url_for('login') }}";return;}
+      if(r.status===403)throw new Error('Acesso negado. Entre com um usuário autorizado da 4Log.');
+      if(!r.ok)throw new Error('Não foi possível consultar o estoque XML (HTTP '+r.status+').');
+      const d=await r.json(), s=d.resumo||{};
+      clientesXML=d.clientes||[];
+      $('#xml-valor-estoque').textContent=moeda(s.valor_estoque_estimado);
+      $('#xml-qtd-produtos').textContent=fmt(s.produtos);
+      $('#xml-qtd-clientes').textContent=fmt(s.clientes_com_estoque);
+      $('#xml-qtd-notas').textContent=fmt(s.notas_importadas);
+      $('#xml-valor-notas').textContent='Valor fiscal total: '+moeda(s.valor_total_notas);
+      $('#xml-negativos').textContent=fmt(s.produtos_negativos);
+      $('#xml-observacao').textContent=d.observacao||'';
+      renderRankingXML();
+      const select=$('#xml-cliente-selecionado'), selecionado=select.value;
+      select.innerHTML='<option value="">Selecione um cliente</option>'+clientesXML.map(c=>`<option value="${esc(c.chave)}">${esc(c.nome)}${c.cnpj?' — '+esc(c.cnpj):''}</option>`).join('');
+      if(clientesXML.some(c=>c.chave===selecionado))select.value=selecionado;
+      else if(clientesXML.length)select.value=clientesXML[0].chave;
+      mostrarClienteXML(select.value);
+      const notas=d.notas||[];
+      $('#xml-notas').innerHTML=notas.map(n=>`<tr>
+        <td>${fmtData(n.data_emissao)}</td><td>${esc(n.numero||'—')}/${esc(n.serie||'—')}</td>
+        <td>${n.tipo_movimento==='entrada'?'Entrada':'Saída'}</td>
+        <td>${esc(n.emitente||'—')}${n.emitente_cnpj?`<div class="status">${esc(n.emitente_cnpj)}</div>`:''}</td><td>${esc(n.destinatario||'—')}</td>
+        <td class="num">${moeda(n.valor_total)}</td>
+        <td><button type="button" class="btn" data-excluir-xml="${esc(n.chave)}" style="background:#9b2c2c;border-color:#9b2c2c">Excluir</button></td>
+      </tr>`).join('')||'<tr><td colspan="7" class="empty">Nenhuma nota importada.</td></tr>';
+    }catch(e){
+      corpo.innerHTML=`<tr><td colspan="8" class="empty">${esc(e.message)}</td></tr>`;
+      $('#xml-ranking').innerHTML=`<tr><td colspan="8" class="empty">${esc(e.message)}</td></tr>`;
+    }
+  }
+  function renderRankingXML(){
+    $('#xml-ranking').innerHTML=clientesXML.map((c,i)=>`<tr>
+      <td>${i+1}</td><td>${esc(c.nome||'Emitente não identificado')}</td><td>${esc(c.cnpj||'—')}</td>
+      <td class="num">${fmt(c.notas_importadas)}</td><td class="num">${fmt(c.produtos)}</td>
+      <td class="num" style="${c.produtos_negativos?'color:#b42318;font-weight:800':''}">${fmt(c.produtos_negativos)}</td>
+      <td class="num">${moeda(c.valor_estoque_estimado)}</td>
+      <td><button type="button" class="btn" data-cliente-xml="${esc(c.chave)}">Ver estoque</button></td>
+    </tr>`).join('')||'<tr><td colspan="8" class="empty">Ainda não há XMLs importados. Importe notas para montar o ranking.</td></tr>';
+  }
+  function mostrarClienteXML(chave){
+    const c=clientesXML.find(x=>x.chave===chave);
+    if(!c){produtosXML=[];$('#xml-detalhe-nome').textContent='—';$('#xml-detalhe-cnpj').textContent='';$('#xml-detalhe-valor').textContent=moeda(0);$('#xml-detalhe-resumo').textContent='Nenhum cliente selecionado';renderProdutosXML();return;}
+    produtosXML=c.produtos_detalhe||[];
+    mostrarTodosProdutosXML=false;
+    $('#xml-detalhe-nome').textContent=c.nome||'Emitente não identificado';
+    $('#xml-detalhe-cnpj').textContent=c.cnpj?'CNPJ/CPF: '+c.cnpj:'Documento não informado no XML';
+    $('#xml-detalhe-valor').textContent=moeda(c.valor_estoque_estimado);
+    $('#xml-detalhe-resumo').textContent=`${fmt(c.produtos)} produto(s) · ${fmt(c.notas_importadas)} nota(s) · ${fmt(c.produtos_negativos)} saldo(s) negativo(s)`;
+    renderProdutosXML();
+  }
+  function renderProdutosXML(){
+    const campo=$('#buscar-produto-xml');
+    if(!campo)return;
+    const busca=(campo.value||'').trim().toLocaleLowerCase('pt-BR');
+    const lista=produtosXML.filter(p=>(p.codigo+' '+p.descricao).toLocaleLowerCase('pt-BR').includes(busca));
+    const visiveis=mostrarTodosProdutosXML?lista:lista.slice(0,LIMITE_PRODUTOS_XML);
+    $('#xml-itens').innerHTML=visiveis.map(p=>`<tr>
+      <td>${esc(p.codigo)}</td><td>${esc(p.descricao)}</td><td>${esc(p.unidade)}</td>
+      <td class="num">${fmt(p.qtd_entrada)}</td><td class="num">${fmt(p.qtd_saida)}</td>
+      <td class="num" style="${p.saldo<0?'color:#b42318;font-weight:800':''}">${fmt(p.saldo)}</td>
+      <td class="num">${moeda(p.custo_medio)}</td><td class="num">${moeda(p.valor_estimado)}</td>
+    </tr>`).join('')||'<tr><td colspan="8" class="empty">Nenhum produto encontrado para este cliente.</td></tr>';
+    const botao=$('#xml-toggle-itens');
+    const temMais=lista.length>LIMITE_PRODUTOS_XML;
+    botao.style.display=temMais?'inline-flex':'none';
+    botao.textContent=mostrarTodosProdutosXML?'Mostrar menos':`Mostrar mais (${fmt(lista.length-LIMITE_PRODUTOS_XML)} restantes)`;
+    botao.setAttribute('aria-expanded',String(mostrarTodosProdutosXML));
+  }
+  $('#xml-toggle-itens').addEventListener('click',()=>{mostrarTodosProdutosXML=!mostrarTodosProdutosXML;renderProdutosXML();});
+  $('#buscar-produto-xml').addEventListener('input',()=>{mostrarTodosProdutosXML=false;renderProdutosXML();});
+  $('#xml-cliente-selecionado').addEventListener('change',e=>mostrarClienteXML(e.target.value));
+  $('#xml-ranking').addEventListener('click',e=>{const b=e.target.closest('[data-cliente-xml]');if(!b)return;$('#xml-cliente-selecionado').value=b.dataset.clienteXml;mostrarClienteXML(b.dataset.clienteXml);$('#painel-estoque-xml').scrollIntoView({behavior:'smooth',block:'start'});});
+  $('#form-xml').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const arquivos=$('#arquivos-xml').files;
+    if(!arquivos.length)return;
+    const form=new FormData();
+    form.append('tipo_movimento',$('#tipo-xml').value);
+    for(const arquivo of arquivos)form.append('arquivos',arquivo);
+    $('#importar-xml').disabled=true;$('#importar-xml').textContent='Importando…';
+    $('#erro-xml').style.display='none';$('#resultado-xml').style.display='none';
+    $('#status-xml').textContent='Lendo arquivos XML e salvando os itens…';
+    try{
+      const r=await fetch('/api/4log/estoque-xml/importar',{
+        method:'POST',body:form,credentials:'same-origin',
+        headers:{'X-CSRF-Token':document.querySelector('meta[name="csrf-token"]').content}
+      });
+      const d=await r.json();
+      if(!r.ok)throw new Error(d.erro||'Falha ao importar os XMLs.');
+      const mensagens=[];
+      mensagens.push(`<strong>${esc(d.mensagem||'Importação concluída')}</strong>`);
+      if((d.duplicados||[]).length)mensagens.push(`${d.duplicados.length} duplicada(s), ignorada(s).`);
+      if((d.erros||[]).length)mensagens.push((d.erros||[]).map(x=>`${esc(x.arquivo)}: ${esc(x.erro)}`).join('<br>'));
+      $('#resultado-xml').innerHTML=mensagens.join('<br>');
+      $('#resultado-xml').style.display='block';
+      $('#status-xml').textContent='Importação finalizada. Confira abaixo o saldo calculado.';
+      $('#arquivos-xml').value='';
+      await carregarEstoqueXML();
+    }catch(err){
+      $('#erro-xml').textContent=err.message;$('#erro-xml').style.display='block';
+      $('#status-xml').textContent='Não foi possível concluir a importação.';
+    }finally{$('#importar-xml').disabled=false;$('#importar-xml').textContent='Importar XML';}
+  });
+  $('#xml-notas').addEventListener('click',async e=>{
+    const btn=e.target.closest('[data-excluir-xml]');if(!btn)return;
+    const chave=btn.dataset.excluirXml;
+    if(!confirm('Excluir esta nota do cálculo do estoque? Os itens dela também serão removidos.'))return;
+    btn.disabled=true;
+    try{
+      const r=await fetch('/api/4log/estoque-xml/notas/'+encodeURIComponent(chave),{
+        method:'DELETE',credentials:'same-origin',
+        headers:{'X-CSRF-Token':document.querySelector('meta[name="csrf-token"]').content}
+      });
+      const d=await r.json();if(!r.ok)throw new Error(d.erro||'Não foi possível excluir a nota.');
+      await carregarEstoqueXML();
+    }catch(err){alert(err.message);btn.disabled=false;}
+  });
+
+  $('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)ativarAba(b.dataset.aba);});$('#ano').addEventListener('change',carregar);$('#mes').addEventListener('change',carregar);$('#limpar').addEventListener('click',()=>{$('#ano').value='';$('#mes').value='';carregar();});$('#atualizar').addEventListener('click',carregar);carregar();
+</script>
+</body>
+</html>

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lançamentos · {{ nome_empresa }}</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        :root {
+            --bg01: #302E2B;
+            --bg02: #ffffff;
+            --bg03: #473e31;
+            --bg04: #3a3835;
+            --panel: #161616;
+            --panel-2: #1f1f1f;
+            --line: #2c2c2c;
+            --text: #f5f5f5;
+            --muted: #9a9a9a;
+            --dim: #6b6b6b;
+            --white: #ffffff;
+        }
+
+        body {
+            background: var(--bg01);
+            color: var(--text);
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            font-size: 14px;
+            min-height: 100vh
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--bg01);
+            border-bottom: 1px solid var(--line)
+        }
+
+        .bar {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap
+        }
+
+        .brand {
+            font-weight: 700;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+
+        .brand span {
+            color: var(--dim);
+            font-weight: 500
+        }
+
+        .logo {
+            height: 70px
+        }
+
+        .spacer {
+            flex: 1
+        }
+
+        main {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px
+        }
+
+        .btn {
+            background: var(--bg03);
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: .15s
+        }
+
+        .btn:hover {
+            border-color: var(--muted)
+        }
+
+        .btn.primario {
+            background: var(--white);
+            color: #000;
+            border-color: var(--white)
+        }
+
+        .btn.perigo {
+            color: #ff6b6b;
+            border-color: rgba(255, 107, 107, .3);
+            background: var(--panel)
+        }
+
+        .btn.perigo:hover {
+            background: rgba(255, 107, 107, .1);
+            border-color: #ff6b6b
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-left: 16px;
+            border-left: 1px solid var(--line)
+        }
+
+        .ola {
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .ola strong {
+            color: var(--text)
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap
+        }
+
+        .tab {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 9px 18px;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        .tab.ativa {
+            background: var(--white);
+            color: #111;
+            border-color: var(--white)
+        }
+
+        .tab:hover {
+            background-color: var(--bg02);
+            color: var(--bg01)
+        }
+
+        .card {
+            background: var(--bg04);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 18px
+        }
+
+        .card h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: 14px
+        }
+
+        .campos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px
+        }
+
+        label {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--muted);
+            font-weight: 600
+        }
+
+        label b {
+            color: #ff6b6b
+        }
+
+        input,
+        select {
+            background: var(--bg03);
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 9px 10px;
+            font: inherit;
+            font-size: 13px;
+            text-transform: none;
+            letter-spacing: 0;
+            outline: none;
+            width: 100%
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--muted)
+        }
+
+        input[type=date],
+        input[type=time],
+        input[type=datetime-local] {
+            color-scheme: dark
+        }
+
+        .dica {
+            text-transform: none;
+            letter-spacing: 0;
+            font-weight: 500;
+            font-size: 11px;
+            color: var(--dim);
+            min-height: 14px
+        }
+
+        .dica.ok {
+            color: #9be8ac
+        }
+
+        .dica.novo {
+            color: #e0c9a6
+        }
+
+        .linhas {
+            margin-top: 18px
+        }
+
+        .linha {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            align-items: end;
+            padding: 12px 0;
+            border-top: 1px solid var(--line)
+        }
+
+        .acoes {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+            align-items: center
+        }
+
+        .msg {
+            font-size: 13px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: none
+        }
+
+        .msg.ok {
+            display: inline-block;
+            background: rgba(120, 220, 140, .12);
+            color: #9be8ac
+        }
+
+        .msg.erro {
+            display: inline-block;
+            background: rgba(255, 107, 107, .12);
+            color: #ff9a9a
+        }
+
+        .tablewrap {
+            max-height: 420px;
+            overflow: auto;
+            border: 1px solid var(--line);
+            border-radius: 8px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: var(--panel-2);
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            text-align: left;
+            padding: 10px 12px;
+            white-space: nowrap
+        }
+
+        td {
+            padding: 9px 12px;
+            border-top: 1px solid var(--line);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap
+        }
+
+        .r {
+            text-align: right
+        }
+
+        .vazio {
+            color: var(--dim);
+            padding: 24px;
+            text-align: center
+        }
+
+        dialog {
+            background: var(--bg04);
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 20px;
+            width: min(900px, 95vw);
+            margin: auto
+        }
+
+        dialog::backdrop {
+            background: rgba(0, 0, 0, .55)
+        }
+
+        dialog h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: 14px
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="bar">
+            <div class="brand">
+                <img src="/static/img/logo_porto_branco.png" alt="Logo {{ nome_empresa }}" class="logo">
+                <div>Painel <span>Operacional</span> <span><br>Porto</span> Brasil</div>
+            </div>
+            <div class="spacer"></div>
+            <a class="btn" href="{{ url_for('dashboard', empresa_nome='porto') }}">← Dashboard</a>
+            <button class="btn" id="excel" type="button" title="Baixa todas as linhas desta aba, com quem lançou">⬇
+                Excel</button>
+            <button class="btn" id="importar" type="button"
+                title="Importa um .xlsx com as mesmas colunas do Excel baixado">⬆ Importar</button>
+            <input type="file" id="arquivo" accept=".xlsx" hidden>
+            <div class="user-info">
+                <span class="ola">Olá, <strong>{{ usuario_logado }}</strong></span>
+                <a class="btn perigo" href="{{ url_for('logout') }}">Sair</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="tabs" id="tabs"></div>
+
+        <div class="card">
+            <h3 id="form-titulo">Novo lançamento</h3>
+            <form id="form" autocomplete="off">
+                <div class="campos" id="cabecalho"></div>
+                <div class="linhas" id="linhas"></div>
+                <div class="acoes">
+                    <button type="button" class="btn" id="add-linha">+ Adicionar linha</button>
+                    <button type="submit" class="btn primario">Salvar lançamento</button>
+                    <button type="button" class="btn" id="limpar">Limpar</button>
+                    <span class="msg" id="msg"></span>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>Últimos lançamentos <span id="lista-tipo" style="text-transform:none;letter-spacing:0"></span></h3>
+            <div id="lista"></div>
+        </div>
+    </main>
+
+    <dialog id="dlg">
+        <form id="ed-form" autocomplete="off">
+            <h3 id="ed-titulo">Editar lançamento</h3>
+            <div class="campos" id="ed-campos"></div>
+            <div class="acoes">
+                <button type="submit" class="btn primario">Salvar alterações</button>
+                <button type="button" class="btn" id="ed-cancelar">Cancelar</button>
+                <span class="msg" id="ed-msg" role="alert"></span>
+            </div>
+        </form>
+    </dialog>
+
+    <datalist id="dl-cliente"></datalist>
+    <datalist id="dl-transportadora"></datalist>
+    <datalist id="dl-tipo_do_veiculo"></datalist>
+    <datalist id="dl-destino"></datalist>
+    <datalist id="dl-motivo"></datalist>
+    <datalist id="dl-situacao"></datalist>
+    <datalist id="dl-tamanho"></datalist>
+    <datalist id="dl-operador"></datalist>
+
+    <script>
+        /* ====== CONFIGURAÇÃO DOS FORMULÁRIOS ======
+           Para mudar o que aparece, edite aqui (e as colunas aceitas em LANC no api_porto.py).
+           tipo: text | date | time | int | sugestao (texto com lista de sugestões) */
+        const F = {
+            data: { l: 'Data', tipo: 'date', req: 1 },
+            hora: { l: 'Hora', tipo: 'time' },
+            cliente: { l: 'Cliente', tipo: 'text', lista: 'cliente' },
+            transportadora: { l: 'Transportadora', tipo: 'text', lista: 'transportadora' },
+            placa: { l: 'Placa', tipo: 'text', placa: true },
+            tipo_do_veiculo: { l: 'Tipo do veículo', tipo: 'text', lista: 'tipo_do_veiculo' },
+            destino: { l: 'Destino', tipo: 'text', lista: 'destino' },
+            num_cte: { l: 'CT-e', tipo: 'text' },
+            romaneio: { l: 'Romaneio', tipo: 'text' },
+            nota_fiscal: { l: 'Nota fiscal', tipo: 'text' },
+            nf_origem: { l: 'NF origem', tipo: 'text' },
+            num_pedido: { l: 'Pedido', tipo: 'text' },
+            qtd_pallet: { l: 'Pallets', tipo: 'int' },
+            quantidade_de_caixas: { l: 'Caixas', tipo: 'int' },
+            motivo: { l: 'Motivo', tipo: 'text', lista: 'motivo' },
+            situacao: { l: 'Situação', tipo: 'text', lista: 'situacao' },
+            pedido: { l: 'Pedido', tipo: 'text' },
+            solicitacao: { l: 'Solicitação', tipo: 'date' },
+            agenda: { l: 'Agenda', tipo: 'date' },
+            pallets: { l: 'Pallets', tipo: 'int' },
+            caixas: { l: 'Caixas', tipo: 'int' },
+            tamanho: { l: 'Tamanho da etiqueta', tipo: 'text', lista: 'tamanho' },
+            operador: { l: 'Operador', tipo: 'text', lista: 'operador' },
+            inicio: { l: 'Início', tipo: 'datahora' },
+            conclusao: { l: 'Conclusão', tipo: 'datahora' },
+            etiquetadas: { l: 'Etiquetas usadas', tipo: 'int' }
+        };
+        const TIPOS = {
+            recebimento: {
+                nome: 'Recebimento',
+                cabecalho: ['data', 'hora', 'cliente', 'transportadora', 'num_cte', 'placa', 'tipo_do_veiculo'],
+                linha: ['nota_fiscal', 'num_pedido', 'qtd_pallet'],
+                obrigatorios: ['data', 'cliente', 'num_cte', 'nota_fiscal'],
+                limpar: ['num_cte', 'placa', 'tipo_do_veiculo']   // muda a cada carro
+            },
+            expedicao: {
+                nome: 'Expedição',
+                cabecalho: ['data', 'hora', 'cliente', 'transportadora', 'romaneio', 'destino', 'tipo_do_veiculo'],
+                linha: ['nota_fiscal', 'num_pedido', 'qtd_pallet', 'quantidade_de_caixas'],
+                obrigatorios: ['data', 'cliente', 'romaneio', 'nota_fiscal']
+            },
+            etiquetas: {
+                nome: 'Etiquetas',
+                cabecalho: ['cliente', 'solicitacao', 'agenda', 'operador'],
+                linha: ['pedido', 'pallets', 'caixas', 'tamanho', 'inicio', 'conclusao', 'etiquetadas'],
+                obrigatorios: ['pedido', 'cliente', 'solicitacao', 'pallets', 'caixas', 'tamanho'],
+                manter: ['solicitacao', 'agenda', 'cliente', 'tamanho', 'operador']
+            },
+            devolucao: {
+                nome: 'Devolução',
+                cabecalho: ['data', 'hora', 'cliente', 'transportadora', 'nota_fiscal', 'nf_origem', 'num_pedido', 'motivo', 'situacao', 'qtd_pallet', 'quantidade_de_caixas'],
+                linha: [],
+                obrigatorios: ['data', 'cliente']
+            }
+        };
+
+        const $ = (s, r = document) => r.querySelector(s);
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const fdata = d => { const p = String(d || '').slice(0, 10).split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : '—'; };
+        let tipo = 'recebimento';
+        let linhasLista = {};
+        const fdh = v => { if (!v) return '—'; const [d, h] = String(v).split(/[ T]/); const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]} ${(h || '').slice(0, 5)}`.trim(); };
+        const fval = (c, v) => {
+            const t = F[c].tipo;
+            if (v == null || v === '') return '—';
+            return t === 'date' ? fdata(v) : t === 'datahora' ? fdh(v) : esc(v);
+        };
+
+        function campo(nome, req, edit) {
+            const f = F[nome];
+            const t = f.tipo === 'int' ? 'number' : f.tipo === 'datahora' ? 'datetime-local' : f.tipo;
+            const extra = f.tipo === 'int' ? ' min="0" step="1"' : '';
+            const lista = f.lista ? ` list="dl-${f.lista}"` : '';
+            const placa = f.placa ? ' maxlength="8" style="text-transform:uppercase" placeholder="ABC1D23"' : '';
+            const dica = f.placa && !edit ? '<span class="dica" id="dica-placa"></span>' : '';
+            return `<label>${f.l}${req ? ' <b>*</b>' : ''}<input type="${t}" data-c="${nome}"${extra}${lista}${placa}${req ? ' required' : ''}>${dica}</label>`;
+        }
+
+        function montarForm() {
+            const T = TIPOS[tipo];
+            $('#form-titulo').textContent = `Novo lançamento · ${T.nome}`;
+            $('#cabecalho').innerHTML = T.cabecalho.map(c => campo(c, T.obrigatorios.includes(c))).join('');
+            $('#linhas').innerHTML = '';
+            $('#add-linha').style.display = T.linha.length ? '' : 'none';
+            if (T.linha.length) addLinha();
+            const hoje = new Date(); hoje.setMinutes(hoje.getMinutes() - hoje.getTimezoneOffset());
+            ['data', 'solicitacao'].forEach(n => { const d = $(`#cabecalho [data-c="${n}"]`); if (d) d.value = hoje.toISOString().slice(0, 10); });
+            msg('');
+            ligarPlaca();
+        }
+
+        // Placa -> tipo do veículo: preenche sozinho se a placa já foi lançada antes
+        function ligarPlaca() {
+            const pl = $('#cabecalho [data-c="placa"]'), tp = $('#cabecalho [data-c="tipo_do_veiculo"]'), dica = $('#dica-placa');
+            if (!pl || !tp) return;
+            let ultima = '';
+            const buscar = async () => {
+                const p = pl.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                if (p.length < 7) { dica.textContent = ''; dica.className = 'dica'; ultima = ''; return; }
+                if (p === ultima) return;
+                ultima = p;
+                try {
+                    const j = await fetch(`/api/porto/veiculos/${p}`).then(r => r.json());
+                    if (!j.valida) { dica.textContent = 'Placa inválida'; dica.className = 'dica novo'; return; }
+                    if (j.tipo_do_veiculo) {
+                        tp.value = j.tipo_do_veiculo; tp.dataset.auto = '1'; dica.textContent = '✓ veículo conhecido'; dica.className = 'dica ok';
+                    } else {
+                        dica.textContent = 'Placa nova: informe o tipo, ela será lembrada'; dica.className = 'dica novo'; tp.focus();
+                    }
+                } catch (e) { dica.textContent = ''; }
+            };
+            tp.addEventListener('input', () => { tp.dataset.auto = '0'; });
+            pl.addEventListener('input', () => {
+                pl.value = pl.value.toUpperCase();
+                if (tp.dataset.auto === '1') { tp.value = ''; tp.dataset.auto = '0'; }   // não deixa o tipo da placa anterior
+                buscar();
+            });
+            pl.addEventListener('blur', buscar);
+        }
+
+        function addLinha() {
+            const T = TIPOS[tipo];
+            const div = document.createElement('div');
+            div.className = 'linha';
+            div.innerHTML = T.linha.map(c => campo(c, T.obrigatorios.includes(c))).join('')
+                + '<button type="button" class="btn perigo rm">Remover</button>';
+            div.querySelector('.rm').addEventListener('click', () => {
+                if ($('#linhas').children.length > 1) div.remove();
+            });
+            $('#linhas').appendChild(div);
+            const primeiro = div.querySelector('input'); if ($('#linhas').children.length > 1) primeiro.focus();
+        }
+
+        function msg(texto, ok) {
+            const m = $('#msg'); m.textContent = texto; m.className = 'msg' + (texto ? (ok ? ' ok' : ' erro') : '');
+        }
+
+        function ler(raiz) {
+            const o = {};
+            raiz.querySelectorAll('[data-c]').forEach(i => o[i.dataset.c] = i.value);
+            return o;
+        }
+
+        $('#form').addEventListener('submit', async e => {
+            e.preventDefault();
+            const T = TIPOS[tipo];
+            const corpo = { cabecalho: ler($('#cabecalho')), linhas: [...document.querySelectorAll('#linhas .linha')].map(ler) };
+            try {
+                const r = await fetch(`/api/porto/lancamentos/${tipo}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo)
+                });
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok) { msg(j.erro || `Erro HTTP ${r.status}`); return; }
+                const manter = T.manter || ['data', 'hora', 'cliente', 'transportadora', 'num_cte', 'romaneio', 'tipo_do_veiculo', 'destino'];
+                // limpa só o que muda de um lançamento para o outro; mantém o cabeçalho para agilizar
+                document.querySelectorAll('#linhas .linha').forEach((l, i) => i ? l.remove() : l.querySelectorAll('input').forEach(x => x.value = ''));
+                if (!T.linha.length) $('#cabecalho').querySelectorAll('input').forEach(x => { if (!manter.includes(x.dataset.c)) x.value = ''; });
+                (T.limpar || []).forEach(n => { const i = $(`#cabecalho [data-c="${n}"]`); if (i) i.value = ''; });
+                const dp = $('#dica-placa'); if (dp) { dp.textContent = ''; dp.className = 'dica'; }
+                msg(`${j.inseridos} linha(s) salva(s)`, true);
+                carregarLista();
+            } catch (err) { msg('Falha de conexão: ' + err.message); }
+        });
+
+        $('#add-linha').addEventListener('click', addLinha);
+        $('#limpar').addEventListener('click', montarForm);
+
+        async function carregarLista() {
+            const T = TIPOS[tipo];
+            $('#lista-tipo').textContent = `· ${T.nome}`;
+            const cols = [...new Set([...T.cabecalho, ...T.linha])];
+            try {
+                const r = await fetch(`/api/porto/lancamentos/${tipo}?limite=40`);
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const rows = await r.json();
+                linhasLista = Object.fromEntries(rows.map(o => [String(o.id), o]));
+                $('#lista').innerHTML = rows.length ? `
+                    <div class="tablewrap"><table><thead><tr>${cols.map(c => `<th>${F[c].l}</th>`).join('')}<th>Lançado por</th><th>Lançado em</th><th></th></tr></thead>
+                    <tbody>${rows.map(o => `<tr>${cols.map(c => `<td class="${F[c].tipo === 'int' ? 'r' : ''}">${fval(c, o[c])}</td>`).join('')}
+                    <td>${esc(o.lancado_por ?? '—')}</td><td>${fdh(o.lancado_em)}</td>
+                    <td><button class="btn" data-editar="${o.id}">Editar</button> <button class="btn perigo" data-id="${o.id}">Apagar</button></td></tr>`).join('')}</tbody></table></div>`
+                    : '<div class="vazio">Nenhum lançamento ainda</div>';
+            } catch (e) { $('#lista').innerHTML = `<div class="vazio">Não foi possível carregar (${esc(e.message)})</div>`; }
+        }
+
+        function edMsg(t) { const m = $('#ed-msg'); m.textContent = t; m.className = 'msg' + (t ? ' erro' : ''); }
+
+        function abrirEdicao(id) {
+            const o = linhasLista[String(id)]; if (!o) return;
+            const T = TIPOS[tipo], cols = [...new Set([...T.cabecalho, ...T.linha])];
+            $('#ed-titulo').textContent = `Editar lançamento · ${T.nome}`;
+            $('#ed-campos').innerHTML = cols.map(c => campo(c, T.obrigatorios.includes(c), true)).join('');
+            cols.forEach(c => {
+                const i = $(`#ed-campos [data-c="${c}"]`); if (!i) return;
+                let v = o[c] ?? ''; const t = F[c].tipo;
+                if (t === 'date') v = String(v).slice(0, 10);
+                else if (t === 'time') v = String(v).slice(0, 5);
+                else if (t === 'datahora') v = String(v).slice(0, 16).replace(' ', 'T');
+                i.value = v;
+            });
+            $('#ed-form').dataset.id = id; edMsg(''); $('#dlg').showModal();
+        }
+        $('#ed-cancelar').addEventListener('click', () => $('#dlg').close());
+        $('#ed-form').addEventListener('submit', async e => {
+            e.preventDefault();
+            const id = e.target.dataset.id;
+            try {
+                const r = await fetch(`/api/porto/lancamentos/${tipo}/${encodeURIComponent(id)}`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ler($('#ed-campos')))
+                });
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok) { edMsg(j.erro || `Erro HTTP ${r.status}`); return; }
+                $('#dlg').close(); msg('Lançamento atualizado', true);
+                carregarLista(); carregarSugestoes();
+            } catch (err) { edMsg('Falha de conexão: ' + err.message); }
+        });
+
+        $('#lista').addEventListener('click', async e => {
+            const ed = e.target.closest('button[data-editar]'); if (ed) { abrirEdicao(ed.dataset.editar); return; }
+            const b = e.target.closest('button[data-id]'); if (!b) return;
+            if (!confirm('Apagar esta linha? Isso não pode ser desfeito.')) return;
+            const r = await fetch(`/api/porto/lancamentos/${tipo}/${b.dataset.id}`, { method: 'DELETE' });
+            if (!r.ok) msg('Não foi possível apagar'); else { msg('Linha apagada', true); carregarLista(); }
+        });
+
+        $('#excel').addEventListener('click', () => { window.location.href = `/api/porto/exportar?tabelas=${tipo}`; });
+        $('#importar').addEventListener('click', () => $('#arquivo').click());
+        $('#arquivo').addEventListener('change', async e => {
+            const f = e.target.files[0]; e.target.value = '';
+            if (!f) return;
+            if (!confirm(`Importar "${f.name}" em ${TIPOS[tipo].nome}?\nAs linhas serão adicionadas (nada é substituído) e ficarão registradas no seu usuário.`)) return;
+            const fd = new FormData(); fd.append('arquivo', f);
+            msg('Importando…', true);
+            try {
+                const r = await fetch(`/api/porto/lancamentos/${tipo}/importar`, { method: 'POST', body: fd });
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok) { msg((j.erro || `Erro HTTP ${r.status}`) + (j.detalhes ? ' — ' + j.detalhes.slice(0, 5).join('; ') : '')); return; }
+                msg(`${j.inseridos} linha(s) importada(s)`, true);
+                carregarLista(); carregarSugestoes();
+            } catch (err) { msg('Falha de conexão: ' + err.message); }
+        });
+
+        async function carregarSugestoes() {
+            try {
+                const o = await fetch('/api/porto/lancamentos/opcoes').then(r => r.json());
+                Object.entries(o).forEach(([k, vals]) => {
+                    const dl = document.getElementById('dl-' + k);
+                    if (dl) dl.innerHTML = vals.map(v => `<option value="${esc(v)}">`).join('');
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        $('#tabs').innerHTML = Object.entries(TIPOS).map(([k, t]) => `<button class="tab${k === tipo ? ' ativa' : ''}" data-t="${k}">${t.nome}</button>`).join('');
+        $('#tabs').addEventListener('click', e => {
+            const b = e.target.closest('.tab'); if (!b) return;
+            tipo = b.dataset.t;
+            document.querySelectorAll('.tab').forEach(x => x.classList.toggle('ativa', x === b));
+            montarForm(); carregarLista();
+        });
+
+        montarForm(); carregarLista(); carregarSugestoes();
+    </script>
+</body>
+
+</html>

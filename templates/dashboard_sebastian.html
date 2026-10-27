@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard operacional | Sebastian</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        .kpi-card {
+            color: #ffffff;
+        }
+
+        :root {
+            --bg01: #ffffff;
+            --bg02: #f3f7f9;
+            --bg03: #056089;
+            --bg04: #1c5976;
+            --panel: #056089;
+            --panel-2: #1c5976;
+            --line: #d4e0e6;
+            --text: #173042;
+            --muted: #ffffff;
+            --dim: #536875;
+            --white: #ffffff;
+        }
+
+        body {
+            background: var(--bg01);
+            color: var(--text);
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            font-size: 14px;
+            min-height: 100vh
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(255, 255, 255, .97);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--line);
+            box-shadow: 0 2px 10px rgba(23, 48, 66, .06)
+        }
+
+        .bar {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap
+        }
+
+        .brand {
+            font-weight: 700;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+
+        .brand span {
+            color: #536875;
+            font-weight: 500
+        }
+
+        .logo {
+            height: 70px;
+        }
+
+        .spacer {
+            flex: 1
+        }
+
+        select,
+        select option {
+            background-color: var(--bg03);
+            color: var(--muted);
+        }
+
+        select {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font: inherit;
+            text-decoration: none;
+            cursor: pointer
+        }
+
+        select:hover {
+            border-color: var(--muted);
+        }
+
+        main {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px;
+            color: var(--text)
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap
+        }
+
+        .tab {
+            background: var(--bg04);
+            color: var(--muted);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 9px 18px;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        .tab.ativa {
+            background: transparent;
+            color: var(--bg04);
+            border-color: var(--white)
+        }
+
+        .tab:hover {
+            background: var(--bg02);
+            color: var(--bg04);
+            border-color: var(--white)
+        }
+
+        .filters {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            color: #ffffff;
+        }
+
+        .btn {
+            background: var(--bg03);
+            color: var(--muted);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .15s
+        }
+
+        a.btn {
+            text-decoration: none;
+            display: inline-block
+        }
+
+        .btn:hover {
+            border-color: var(--muted)
+        }
+
+        .status {
+            font-size: 11px;
+            color: #536875;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #fff;
+            opacity: .9
+        }
+
+        .dot.err {
+            background: #ff6b6b
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+            padding-left: 16px;
+            border-left: 1px solid var(--line)
+        }
+
+        .ola {
+            font-size: 13px;
+            color: #536875;
+            font-weight: 500
+        }
+
+        .ola strong {
+            color: var(--text)
+        }
+
+        .btn-logout {
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #ff6b6b;
+            border: 1px solid #ffffff;
+            background: var(--panel);
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: .15s
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 107, 107, .1);
+            border-color: #ff6b6b
+        }
+
+        @media (max-width: 980px) {
+            .bar {
+                padding: 12px 16px
+            }
+
+            .user-info {
+                margin-left: 0;
+                padding-left: 0;
+                border-left: none;
+                width: 100%;
+                justify-content: space-between
+            }
+        }
+
+        .painel {
+            display: none
+        }
+
+        .painel.ativo {
+            display: block
+        }
+
+        /* ---------- cards (KPIs) ---------- */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px
+        }
+
+        .card {
+            background: var(--bg03);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 16px 18px
+        }
+
+        .card small {
+            display: block;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            font-size: 11px;
+            margin-bottom: 8px
+        }
+
+        .card b {
+            font-size: 28px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: #ffffff
+        }
+
+        .card b.txt {
+            display: block;
+            font-size: 17px;
+            line-height: 1.3;
+            word-break: break-word
+        }
+
+        .sub {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--muted);
+            margin-top: 4px;
+            text-transform: none;
+            letter-spacing: 0
+        }
+
+        h3 .sub {
+            display: inline;
+            margin: 0 0 0 8px
+        }
+
+        /* ---------- boxes / gráficos ---------- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 14px
+        }
+
+        .box {
+            background: var(--bg03);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 16px 18px;
+            min-width: 0
+        }
+
+        .largo {
+            grid-column: 1 / -1
+        }
+
+        .box h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: var(--muted);
+            font-weight: 600;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .tools {
+            display: flex;
+            gap: 6px;
+            text-transform: none;
+            letter-spacing: 0
+        }
+
+        .alt {
+            position: relative;
+            height: 300px
+        }
+
+        .alt.alto {
+            height: 440px
+        }
+
+        .empty {
+            color: var(--dim);
+            text-align: center;
+            padding: 60px 0;
+            font-size: 13px
+        }
+
+        .btn {
+            background: var(--bg04);
+            color: var(--muted);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        .btn:hover {
+            border-color: #ffffff;
+            color: var(--bg04);
+            background-color: var(--bg01);
+        }
+
+        .btn.on {
+            background: var(--white);
+            color: #111;
+            border-color: var(--white)
+        }
+
+        .erro {
+            display: none;
+            background: var(--panel);
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            color: #ffffff
+        }
+
+        /* ---------- calendário de quinzenas ---------- */
+        .quinz {
+            display: grid;
+            grid-template-columns: minmax(300px, 470px) minmax(0, 1fr);
+            gap: 18px;
+            align-items: start
+        }
+
+        .calano {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .1em;
+            color: var(--muted);
+            margin-bottom: 8px
+        }
+
+        .cal {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px
+        }
+
+        .mes {
+            background: var(--bg04);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px
+        }
+
+        .mes-t {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: var(--muted);
+            font-weight: 700;
+            margin-bottom: 6px
+        }
+
+        .quin {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            margin-top: 5px;
+            padding: 6px 8px;
+            font: inherit;
+            color: var(--muted);
+            text-align: left;
+            background: rgba(255, 255, 255, calc(.03 + var(--i, 0) * .17));
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            cursor: pointer;
+            transition: .15s
+        }
+
+        .mes-t+.quin {
+            margin-top: 0
+        }
+
+        .quin:hover:not(:disabled) {
+            border-color: #ffffff
+        }
+
+        .quin .qd {
+            font-size: 10px;
+            color: var(--muted);
+            white-space: nowrap
+        }
+
+        .quin .qv {
+            font-size: 13px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums
+        }
+
+        .quin.on {
+            background: var(--white);
+            color: #111;
+            border-color: var(--white)
+        }
+
+        .quin.on .qd {
+            color: #555
+        }
+
+        .quin:disabled {
+            opacity: .35;
+            cursor: default
+        }
+
+        /* ---------- tabelas ---------- */
+        .tablewrap {
+            max-height: 340px;
+            overflow: auto;
+            border: 1px solid var(--line);
+            border-radius: 8px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: var(--bg04);
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            text-align: left;
+            padding: 10px 12px;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap
+        }
+
+        th:hover {
+            color: var(--muted)
+        }
+
+        td {
+            padding: 9px 12px;
+            border-top: 1px solid var(--line);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+            color: #ffffff;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, .05)
+        }
+
+        .r {
+            text-align: right
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid #fff;
+            color: #fff
+        }
+
+        .tag.ok {
+            border-color: #ffffff;
+            color: #ffffff
+        }
+
+        input[type=search] {
+            background: var(--bg04);
+            color: var(--muted);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font: inherit;
+            font-size: 13px;
+            opacity: 1;
+            outline: none
+        }
+
+        @media (max-width: 980px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+
+            .quinz {
+                grid-template-columns: 1fr
+            }
+
+            .bar {
+                padding: 12px 16px
+            }
+
+            main {
+                padding: 16px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="bar">
+            <div class="brand">
+                <img src="/static/img/sebastian.png" alt="Logo {{ nome_empresa }}" class="logo">
+                <div>Painel <span>Operacional</span><br> Sebastian</div>
+            </div>
+            <div class="spacer"></div>
+            <div class="filters">
+                <select id="ano">
+                    <option value="">Todos os anos</option>
+                </select>
+                <select id="mes">
+                    <option value="">Todos os meses</option>
+                    <option value="1">Janeiro</option>
+                    <option value="2">Fevereiro</option>
+                    <option value="3">Março</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Maio</option>
+                    <option value="6">Junho</option>
+                    <option value="7">Julho</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+                <button class="btn" id="limpar" type="button">Limpar</button>
+                <button class="btn" id="atualizar" type="button">↻ Atualizar</button>
+                <a class="btn" href="{{ url_for('lancamentos_empresa', empresa_nome='sebastian') }}">+ Lançamentos</a>
+                <button class="btn" id="excel" type="button"
+                    title="Baixa os dados do período filtrado, com o usuário que lançou">⬇ Excel</button>
+                <div class="status"><span class="dot" id="dot"></span><span id="upd">—</span></div>
+            </div>
+            <div class="user-info">
+                <span class="ola">Olá, <strong>{{ usuario_logado }}</strong></span>
+                <a class="btn-logout" href="{{ url_for('logout') }}">Sair</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="erro" id="erro"></div>
+
+        <div class="tabs" id="tabs">
+            <button class="tab ativa" data-aba="recebimento">Recebimento</button>
+            <button class="tab" data-aba="expedicao">Expedição</button>
+            <button class="tab" data-aba="estoque">Estoque</button>
+        </div>
+
+
+        <!-- ================= RECEBIMENTO ================= -->
+        <section class="painel ativo" id="painel-recebimento">
+            <div class="cards">
+                <div class="card"><small>Carros</small><b id="rec-carros">-</b></div>
+                <div class="card"><small>Pallets</small><b id="rec-pallets">-</b></div>
+                <div class="card"><small>Notas de transferência</small><b id="rec-pedidos">-</b></div>
+                <div class="card"><small>Notas de depósito</small><b id="rec-notas">-</b></div>
+                <div class="card"><small>Top cliente</small><b class="txt" id="rec-maior-cliente">-</b></div>
+            </div>
+            <div class="grid">
+                <div class="box largo">
+                    <h3><span id="rec-dia-tit">Pallets por dia</span><span class="tools" id="rec-dia-tools"></span></h3>
+                    <div class="quinz">
+                        <div>
+                            <div class="calano" id="rec-calano"></div>
+                            <div class="cal" id="rec-cal"></div>
+                        </div>
+                        <div class="alt alto"><canvas id="rec-dia"></canvas></div>
+                    </div>
+                </div>
+                <div class="box">
+                    <h3>Pallets por dia da semana</h3>
+                    <div class="alt"><canvas id="rec-dia-semana"></canvas></div>
+                </div>
+                <div class="box">
+                    <h3>Tipos de veículos</h3>
+                    <div class="alt"><canvas id="rec-tipos-veiculos"></canvas></div>
+                </div>
+                <div class="box largo">
+                    <h3>Top clientes <span class="sub">PALLETS</span></h3>
+                    <div class="alt"><canvas id="rec-top-clientes"></canvas></div>
+                </div>
+                <div class="box largo">
+                    <h3>Detalhe por cliente</h3>
+                    <div id="rec-detalhe-clientes"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= EXPEDIÇÃO ================= -->
+        <section class="painel" id="painel-expedicao">
+            <div class="cards">
+                <div class="card"><small>Carros</small><b id="exp-carros">-</b></div>
+                <div class="card"><small>Pallets</small><b id="exp-pallets">-</b></div>
+                <div class="card"><small>Pedidos</small><b id="exp-pedidos">-</b></div>
+                <div class="card"><small>Top 1 cliente</small><b class="txt" id="exp-cliente-pallet">-</b></div>
+                <div class="card"><small>Top 1 destino</small><b class="txt" id="exp-destino-pallet">-</b></div>
+            </div>
+            <div class="grid">
+                <div class="box largo">
+                    <h3><span id="exp-dia-tit">Pallets por dia</span><span class="tools" id="exp-dia-tools"></span></h3>
+                    <div class="quinz">
+                        <div>
+                            <div class="calano" id="exp-calano"></div>
+                            <div class="cal" id="exp-cal"></div>
+                        </div>
+                        <div class="alt alto"><canvas id="exp-dia"></canvas></div>
+                    </div>
+                </div>
+                <div class="box">
+                    <h3>Pallets por dia da semana</h3>
+                    <div class="alt"><canvas id="exp-dia-semana"></canvas></div>
+                </div>
+                <div class="box">
+                    <h3>Tipos de veículos</h3>
+                    <div class="alt"><canvas id="exp-tipos-veiculos"></canvas></div>
+                </div>
+                <div class="box">
+                    <h3>Top clientes <span class="sub">pallets</span></h3>
+                    <div class="alt"><canvas id="exp-top-clientes"></canvas></div>
+                </div>
+                <div class="box">
+                    <h3>Destinos <span class="sub">pallets</span></h3>
+                    <div class="alt"><canvas id="exp-destinos"></canvas></div>
+                </div>
+                <div class="box largo">
+                    <h3>Detalhe por cliente</h3>
+                    <div id="exp-detalhe-clientes"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= ESTOQUE (com o comparativo) ================= -->
+        <section class="painel" id="painel-estoque">
+            <div class="cards">
+                <div class="card"><small>Pallets em estoque</small><b id="est-saldo">-</b><span class="sub">recebido −
+                        expedido</span></div>
+                <div class="card"><small>Total recebido</small><b id="est-recebido">-</b></div>
+                <div class="card"><small>Total expedido</small><b id="est-expedido">-</b></div>
+                <div class="card"><small>Expedido / Recebido</small><b id="est-pct">-</b></div>
+                <div class="card"><small>Top cliente em estoque</small><b class="txt" id="est-maior-cliente">-</b></div>
+            </div>
+            <div class="grid">
+                <div class="box">
+                    <h3>Evolução do estoque <span class="sub">pallets acumulados · todo o histórico</span></h3>
+                    <div class="alt"><canvas id="est-evol"></canvas></div>
+                </div>
+                <div class="box">
+                    <h3>Estoque por cliente <span class="sub">pallets</span></h3>
+                    <div class="alt"><canvas id="est-clientes"></canvas></div>
+                </div>
+                <div class="box largo">
+                    <h3><span id="est-dia-tit">Recebido x Expedido por dia</span><span class="tools"
+                            id="est-dia-tools"></span></h3>
+                    <div class="quinz">
+                        <div>
+                            <div class="calano" id="est-calano"></div>
+                            <div class="cal" id="est-cal"></div>
+                        </div>
+                        <div class="alt alto"><canvas id="est-dia"></canvas></div>
+                    </div>
+                </div>
+                <div class="box largo">
+                    <h3>Posição por cliente <span class="sub">saldo = recebido − expedido · todo o histórico</span></h3>
+                    <div id="est-detalhe"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        /* ====================== helpers ====================== */
+        const $ = (s, r = document) => r.querySelector(s);
+        const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const nf = v => Number(v ?? 0).toLocaleString('pt-BR');
+        const nf1 = v => Number(v ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+        const sinal = v => (v > 0 ? '+' : '') + nf(v);
+        const fdata = d => { const p = String(d).slice(0, 10).split('-'); return p.length === 3 ? `${p[2]}/${p[1]}` : d; };
+        const fdataFull = d => { if (!d) return '—'; const p = String(d).slice(0, 10).split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : esc(d); };
+        const DIAS3 = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const pad = n => String(n).padStart(2, '0');
+        const PAL = ['#ffffff', '#1c5976', '#1c5976', '#ffffff', '#056089', '#ffffff', '#056089'];
+        const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+        const TODOS = { ano: '', mes: '' };   // ignora os filtros do topo (histórico completo)
+
+        const state = { tab: 'recebimento', ano: '', mes: '' };
+        let anos = [];
+        let falhas = [];
+        const charts = {};
+        const cal = {};   // estado do calendário de cada aba
+
+        Chart.defaults.color = '#ffffff';
+        Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+        Chart.defaults.font.size = 11;
+        Chart.defaults.borderColor = 'rgba(255,255,255,.10)';
+        Chart.defaults.plugins.legend.labels.boxWidth = 10;
+        Chart.defaults.plugins.tooltip.backgroundColor = '#000';
+        Chart.defaults.plugins.tooltip.padding = 10;
+
+        /* ---------- API ---------- */
+        async function api(path, ov = {}) {
+            const p = Object.assign({ ano: state.ano, mes: state.mes }, ov);
+            const qs = new URLSearchParams();
+            for (const [k, v] of Object.entries(p)) if (v) qs.set(k, v);
+            const r = await fetch(path + (qs.toString() ? '?' + qs : ''));
+            if (r.status === 401) { window.location.href = "{{ url_for('login') }}"; return new Promise(() => { }); }
+            if (!r.ok) throw new Error(`${path} → HTTP ${r.status}`);
+            return r.json();
+        }
+        async function safe(path, fallback, ov) {
+            try { return await api(path, ov); }
+            catch (e) { console.error(e); falhas.push(e.message); return fallback; }
+        }
+
+        /* ---------- dados ---------- */
+        // {data, total} -> { '2026-08-04': 12, ... }
+        const mapa = (rows, campo = 'total') => rows.reduce((m, r) => {
+            const d = String(r.data).slice(0, 10);
+            m[d] = (m[d] || 0) + (+r[campo] || 0);
+            return m;
+        }, {});
+
+        // junta várias listas pela mesma chave (ex.: cliente) em uma tabela só
+        function juntar(chave, fontes) {
+            const m = new Map();
+            fontes.forEach(([rows, campo, orig = 'total']) => {
+                rows.forEach(r => {
+                    const k = r[chave] ?? '—';
+                    if (!m.has(k)) m.set(k, { [chave]: k });
+                    m.get(k)[campo] = (m.get(k)[campo] || 0) + (+r[orig] || 0);
+                });
+            });
+            const out = [...m.values()];
+            out.forEach(o => fontes.forEach(([, campo]) => { if (o[campo] == null) o[campo] = 0; }));
+            return out;
+        }
+
+        // KPI "maior cliente": mostra o nome e o valor/participação
+        function topo(id, rows, campo, unidade, chave = 'cliente') {
+            const pos = rows.filter(r => (+r[campo] || 0) > 0);
+            const top = pos.sort((a, b) => b[campo] - a[campo])[0];
+            if (!top) { set(id, '—'); return; }
+            const tot = pos.reduce((a, r) => a + (+r[campo]), 0);
+            set(id, `${esc(top[chave] || '—')}<span class="sub">${nf(top[campo])} ${unidade} · ${nf1(100 * top[campo] / tot)}% do total</span>`);
+        }
+
+        /* ---------- gráficos ---------- */
+        function chart(id, cfg) {
+            if (charts[id]) charts[id].destroy();
+            const canvas = document.getElementById(id);
+            const host = canvas.parentElement;
+            const old = host.querySelector('.empty'); if (old) old.remove();
+            const temDados = cfg.data.datasets.some(d => d.data.length);
+            canvas.style.display = temDados ? '' : 'none';
+            if (!temDados) { host.insertAdjacentHTML('beforeend', '<div class="empty">Sem dados no período</div>'); return; }
+            cfg.options = Object.assign({ responsive: true, maintainAspectRatio: false }, cfg.options || {});
+            charts[id] = new Chart(canvas, cfg);
+        }
+        const gridOff = { grid: { display: false } };
+
+        function barH(id, labels, data, label, top = 10) {
+            chart(id, {
+                type: 'bar', data: { labels: labels.slice(0, top), datasets: [{ label, data: data.slice(0, top), backgroundColor: '#ffffff', borderRadius: 4, barThickness: 14 }] },
+                options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { y: gridOff, x: { beginAtZero: true } } }
+            });
+        }
+        function barV(id, labels, data, label) {
+            chart(id, {
+                type: 'bar', data: { labels, datasets: [{ label, data, backgroundColor: '#ffffff', borderRadius: 4 }] },
+                options: { plugins: { legend: { display: false } }, scales: { x: gridOff, y: { beginAtZero: true } } }
+            });
+        }
+        function line(id, labels, label, data) {
+            chart(id, {
+                type: 'line', data: { labels, datasets: [{ label, data, borderColor: '#ffffff', backgroundColor: '#ffffff22', fill: true, tension: .3, pointRadius: 2, pointHoverRadius: 5, borderWidth: 2 }] },
+                options: { interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false } }, scales: { x: gridOff, y: { beginAtZero: true } } }
+            });
+        }
+        function donut(id, labels, data) {
+            chart(id, {
+                type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: PAL, borderColor: '#1c5976', borderWidth: 3 }] },
+                options: { cutout: '64%', plugins: { legend: { position: 'right' } } }
+            });
+        }
+
+        /* ---------- tabela com busca, ordenação e CSV ---------- */
+        function tabela(el, cols, rows, nome = 'dados') {
+            el.innerHTML = `
+                <div style="display:flex;gap:8px;margin-bottom:10px">
+                    <input type="search" placeholder="Buscar…" style="flex:1">
+                    <button class="btn">⬇ CSV</button>
+                </div>
+                <div class="tablewrap"><table><thead><tr></tr></thead><tbody></tbody></table></div>`;
+            const inp = $('input', el), tb = $('tbody', el), tr = $('thead tr', el);
+            let sort = { k: null, asc: true }, termo = '';
+            tr.innerHTML = cols.map(c => `<th data-k="${c.k}" class="${c.r ? 'r' : ''}">${c.l}<span></span></th>`).join('');
+            const pintar = () => {
+                let r = rows.filter(o => !termo || cols.some(c => String(o[c.k] ?? '').toLowerCase().includes(termo)));
+                if (sort.k) r = [...r].sort((a, b) => {
+                    const x = a[sort.k], y = b[sort.k];
+                    const c = (typeof x === 'number' && typeof y === 'number') ? x - y : String(x ?? '').localeCompare(String(y ?? ''), 'pt-BR', { numeric: true });
+                    return sort.asc ? c : -c;
+                });
+                tb.innerHTML = r.length ? r.map(o => '<tr>' + cols.map(c =>
+                    `<td class="${c.r ? 'r' : ''}">${c.f ? c.f(o[c.k], o) : esc(o[c.k] ?? '—')}</td>`).join('') + '</tr>').join('')
+                    : `<tr><td colspan="${cols.length}" class="empty" style="padding:30px">Nada encontrado</td></tr>`;
+                $$('th span', tr).forEach(s => s.textContent = '');
+                if (sort.k) $(`th[data-k="${sort.k}"] span`, tr).textContent = sort.asc ? ' ▲' : ' ▼';
+            };
+            inp.addEventListener('input', () => { termo = inp.value.toLowerCase(); pintar(); });
+            tr.addEventListener('click', e => {
+                const th = e.target.closest('th'); if (!th) return;
+                const k = th.dataset.k; sort = { k, asc: sort.k === k ? !sort.asc : true }; pintar();
+            });
+            $('button', el).addEventListener('click', () => {
+                const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+                const csv = [cols.map(c => q(c.l)).join(';'), ...rows.map(o => cols.map(c => q(o[c.k])).join(';'))].join('\n');
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+                a.download = `${nome}.csv`; a.click();
+            });
+            pintar();
+        }
+
+        /* ====================== CALENDÁRIO DE QUINZENAS ====================== */
+        // Cada mês vira dois botões: 1ª (dia 1–15) e 2ª (dia 16–fim).
+        // Ao escolher uma quinzena, o gráfico ao lado mostra os dias dela.
+        const ultimoDia = (a, m) => new Date(a, m, 0).getDate();
+        const anoCal = () => Number(state.ano || anos[anos.length - 1] || new Date().getFullYear());
+
+        function totaisQuinzena(mp, ano) {
+            const t = {};
+            for (const [d, v] of Object.entries(mp)) {
+                if (+d.slice(0, 4) !== ano) continue;
+                const k = `${d.slice(0, 7)}-${+d.slice(8, 10) <= 15 ? 1 : 2}`;
+                t[k] = (t[k] || 0) + v;
+            }
+            return t;
+        }
+
+        function diasQuinzena(sel) {
+            const [a, m] = sel.ym.split('-').map(Number);
+            const ini = sel.q === 1 ? 1 : 16, fim = sel.q === 1 ? 15 : ultimoDia(a, m);
+            const out = [];
+            for (let d = ini; d <= fim; d++) {
+                out.push({ iso: `${sel.ym}-${pad(d)}`, label: [pad(d), DIAS3[new Date(a, m - 1, d).getDay()]] });
+            }
+            return out;
+        }
+
+        // p = prefixo da aba (rec, exp, est, dev); metricas = { chave: {l, titulo, mapa, series, fmt} }
+        function montarQuinzena(p, metricas) {
+            const ant = cal[p];
+            const chaves = Object.keys(metricas);
+            cal[p] = {
+                metricas, ano: anoCal(),
+                metrica: ant && metricas[ant.metrica] ? ant.metrica : chaves[0],
+                sel: ant ? ant.sel : null,
+                mesInteiro: ant ? !!ant.mesInteiro : false
+            };
+            const tools = document.getElementById(`${p}-dia-tools`);
+            tools.innerHTML = (chaves.length > 1
+                ? chaves.map(k => `<button class="btn ${k === cal[p].metrica ? 'on' : ''}" data-m="${k}">${esc(metricas[k].l)}</button>`).join('')
+                : '') + `<button class="btn ${cal[p].mesInteiro ? 'on' : ''}" data-full-month="1">Mês inteiro</button>`;
+            tools.onclick = e => {
+                const b = e.target.closest('button'); if (!b) return;
+                if (b.dataset.fullMonth) {
+                    cal[p].mesInteiro = !cal[p].mesInteiro;
+                } else {
+                    cal[p].metrica = b.dataset.m;
+                }
+                $$('button', tools).forEach(x => {
+                    x.classList.toggle('on', x === b || (x.dataset.fullMonth && cal[p].mesInteiro) ||
+                        (x.dataset.m && x.dataset.m === cal[p].metrica && !cal[p].mesInteiro));
+                });
+                pintarQuinzena(p);
+            };
+            set(`${p}-calano`, `CALENDÁRIO ${cal[p].ano}`);
+            pintarQuinzena(p);
+        }
+
+        function pintarQuinzena(p) {
+            const c = cal[p]; if (!c) return;
+            const M = c.metricas[c.metrica];
+            const totais = totaisQuinzena(M.mapa, c.ano);
+            const chaves = Object.keys(totais).sort();
+
+            // seleção padrão: 1ª quinzena com dados do mês filtrado, ou a mais recente
+            if (!c.sel || totais[`${c.sel.ym}-${c.sel.q}`] === undefined) {
+                c.sel = null;
+                if (chaves.length) {
+                    const pref = state.mes ? `${c.ano}-${pad(state.mes)}` : null;
+                    const k = (pref && chaves.find(x => x.startsWith(pref))) || chaves[chaves.length - 1];
+                    c.sel = { ym: k.slice(0, 7), q: +k.slice(8) };
+                }
+            }
+
+            const max = Math.max(1, ...Object.values(totais).map(Math.abs));
+            let html = '';
+            for (let m = 1; m <= 12; m++) {
+                const ym = `${c.ano}-${pad(m)}`, ud = ultimoDia(c.ano, m);
+                html += `<div class="mes"><div class="mes-t">${MESES[m - 1]}</div>` + [1, 2].map(q => {
+                    const v = totais[`${ym}-${q}`], tem = v !== undefined;
+                    const on = c.sel && c.sel.ym === ym && c.sel.q === q;
+                    const i = tem ? Math.min(1, Math.abs(v) / max) : 0;
+                    return `<button class="quin ${on ? 'on' : ''}" ${tem ? '' : 'disabled'} data-ym="${ym}" data-q="${q}" style="--i:${i.toFixed(2)}">`
+                        + `<span class="qd">${q}ª · ${q === 1 ? '01–15' : '16–' + ud}</span>`
+                        + `<span class="qv">${tem ? M.fmt(v) : '—'}</span></button>`;
+                }).join('') + '</div>';
+            }
+            const el = document.getElementById(`${p}-cal`);
+            el.innerHTML = html;
+            el.onclick = e => {
+                const b = e.target.closest('.quin'); if (!b || b.disabled) return;
+                c.sel = { ym: b.dataset.ym, q: +b.dataset.q };
+                c.mesInteiro = false;
+                pintarQuinzena(p);
+            };
+
+            const tit = document.getElementById(`${p}-dia-tit`);
+            if (!c.sel) {
+                tit.textContent = M.titulo;
+                chart(`${p}-dia`, { type: 'bar', data: { labels: [], datasets: [{ data: [] }] } });
+                return;
+            }
+            const [a, m] = c.sel.ym.split('-').map(Number);
+            const dias = c.mesInteiro
+                ? Array.from({ length: ultimoDia(a, m) }, (_, i) => {
+                    const d = i + 1;
+                    return { iso: `${c.sel.ym}-${pad(d)}`, label: [pad(d), DIAS3[new Date(a, m - 1, d).getDay()]] };
+                })
+                : diasQuinzena(c.sel);
+            const total = c.mesInteiro
+                ? dias.reduce((sum, d) => sum + (M.mapa[d.iso] || 0), 0)
+                : totais[`${c.sel.ym}-${c.sel.q}`];
+            tit.innerHTML = `${esc(M.titulo)}<span class="sub">${c.mesInteiro ? 'Mês inteiro' : `${c.sel.q}ª quinzena`} de ${MESES[m - 1]}/${a} · total ${M.fmt(total)}</span>`;
+            chart(`${p}-dia`, {
+                type: 'bar',
+                data: {
+                    labels: dias.map(d => d.label),
+                    datasets: M.series.map((s, i) => ({ label: s.label, data: dias.map(d => s.mapa[d.iso] || 0), backgroundColor: s.cor || PAL[i], borderRadius: 4 }))
+                },
+                options: { plugins: { legend: { display: M.series.length > 1 } }, scales: { x: gridOff, y: { beginAtZero: true } } }
+            });
+        }
+
+        /* ====================== RECEBIMENTO ====================== */
+        async function carregarRecebimento() {
+            const B = '/api/sebastian/recebimento';
+            const [res, sem, cliP, cliCar, vei, dP, dC] = await Promise.all([
+                safe(`${B}/resumo`, []),
+                safe(`${B}/pallet/dia-semana`, []),
+                safe(`${B}/pallet/cliente`, []),
+                safe(`${B}/carro/por-cliente`, []),
+                safe(`${B}/carro/por-tipo`, []),
+                safe(`${B}/pallet/data`, [], TODOS),
+                safe(`${B}/carro/data`, [], TODOS)
+            ]);
+            const r = res[0] || {};
+            set('rec-carros', nf(r.carros));
+            set('rec-pallets', nf(r.pallets));
+            set('rec-pedidos', nf(r.notas_transferencia));
+            set('rec-notas', nf(r.notas_deposito));
+            topo('rec-maior-cliente', cliP, 'total', 'pallets');
+
+            const mP = mapa(dP), mC = mapa(dC);
+            montarQuinzena('rec', {
+                pallets: { l: 'Pallets', titulo: 'Pallets por dia', mapa: mP, series: [{ label: 'Pallets', mapa: mP, cor: '#ffffff' }], fmt: nf },
+                carros: { l: 'Carros', titulo: 'Carros por dia', mapa: mC, series: [{ label: 'Carros', mapa: mC, cor: '#ffffff' }], fmt: nf }
+            });
+
+            barV('rec-dia-semana', sem.map(d => String(d.dia_semana).slice(0, 3)), sem.map(d => d.total), 'Pallets');
+            donut('rec-tipos-veiculos', vei.map(d => d.veiculo || '—'), vei.map(d => d.total));
+            barH('rec-top-clientes', cliP.map(d => d.cliente || '—'), cliP.map(d => d.total), 'Pallets', 10);
+
+            const tab = juntar('cliente', [[cliP, 'pallets'], [cliCar, 'carros']])
+                .sort((a, b) => b.pallets - a.pallets);
+            tabela($('#rec-detalhe-clientes'), [
+                { k: 'cliente', l: 'Cliente' },
+                { k: 'pallets', l: 'Pallets', r: 1, f: nf },
+                { k: 'carros', l: 'Carros', r: 1, f: nf }
+            ], tab, 'recebimento_clientes');
+        }
+
+        /* ====================== EXPEDIÇÃO ====================== */
+
+        async function carregarExpedicao() {
+            const B = '/api/sebastian/expedicao';
+            const [res, sem, cliP, cliPed, cliCar, destP, vei, dP, dC] = await Promise.all([
+                safe(`${B}/resumo`, []),
+                safe(`${B}/pallet/dia-semana`, []),
+                safe(`${B}/pallet/por-cliente`, []),
+                safe(`${B}/pedido/cliente`, []),
+                safe(`${B}/carro/por-cliente`, []),
+                safe(`${B}/pallet/por-destino`, []),
+                safe(`${B}/carro/veiculo`, []),
+                safe(`${B}/pallet/data`, [], TODOS),
+                safe(`${B}/carro/data`, [], TODOS)
+            ]);
+            const r = res[0] || {};
+            set('exp-carros', nf(r.carros));
+            set('exp-pallets', nf(r.pallets));
+            set('exp-pedidos', nf(r.pedidos));
+            topo('exp-cliente-pallet', cliP, 'total', 'pallets');
+            topo('exp-destino-pallet', destP, 'total', 'pallets', 'destino');
+
+            const mP = mapa(dP), mC = mapa(dC);
+            montarQuinzena('exp', {
+                pallets: { l: 'Pallets', titulo: 'Pallets por dia', mapa: mP, series: [{ label: 'Pallets', mapa: mP, cor: '#ffffff' }], fmt: nf },
+                carros: { l: 'Carros', titulo: 'Carros por dia', mapa: mC, series: [{ label: 'Carros', mapa: mC, cor: '#ffffff' }], fmt: nf }
+            });
+
+            barV('exp-dia-semana', sem.map(d => String(d.dia_semana).slice(0, 3)), sem.map(d => d.total), 'Pallets');
+            donut('exp-tipos-veiculos', vei.map(d => d.veiculo || '—'), vei.map(d => d.total));
+            barH('exp-top-clientes', cliP.map(d => d.cliente || '—'), cliP.map(d => d.total), 'Pallets', 10);
+            barH('exp-destinos', destP.map(d => d.destino || '—'), destP.map(d => d.total), 'Pallets', 10);
+
+            const tab = juntar('cliente', [[cliP, 'pallets'], [cliPed, 'pedidos'], [cliCar, 'carros']])
+                .sort((a, b) => b.pallets - a.pallets);
+            tabela($('#exp-detalhe-clientes'), [
+                { k: 'cliente', l: 'Cliente' },
+                { k: 'pallets', l: 'Pallets', r: 1, f: nf },
+                { k: 'pedidos', l: 'Pedidos', r: 1, f: nf },
+                { k: 'carros', l: 'Carros', r: 1, f: nf }
+            ], tab, 'expedicao_clientes');
+        }
+
+        /* ====================== ESTOQUE (saldo = recebido − expedido, já com o comparativo) ====================== */
+        async function carregarEstoque() {
+            const [cRec, cExp, dRec, dExp] = await Promise.all([
+                safe('/api/sebastian/recebimento/pallet/cliente', [], TODOS),
+                safe('/api/sebastian/expedicao/pallet/por-cliente', [], TODOS),
+                safe('/api/sebastian/recebimento/pallet/data', [], TODOS),
+                safe('/api/sebastian/expedicao/pallet/data', [], TODOS)
+            ]);
+            const cli = juntar('cliente', [[cRec, 'recebido'], [cExp, 'expedido']]);
+            cli.forEach(o => { o.saldo = o.recebido - o.expedido; o.pct = o.recebido ? 100 * o.expedido / o.recebido : 0; });
+            cli.sort((a, b) => b.saldo - a.saldo);
+
+            const recT = cli.reduce((a, o) => a + o.recebido, 0), expT = cli.reduce((a, o) => a + o.expedido, 0);
+            set('est-saldo', nf(recT - expT));
+            set('est-recebido', nf(recT));
+            set('est-expedido', nf(expT));
+            set('est-pct', recT ? nf1(100 * expT / recT) + '%' : '—');
+            topo('est-maior-cliente', cli, 'saldo', 'pallets em estoque');
+
+            const mR = mapa(dRec), mE = mapa(dExp);
+            const datas = [...new Set([...Object.keys(mR), ...Object.keys(mE)])].sort();
+            let acc = 0;
+            const evol = datas.map(d => { acc += (mR[d] || 0) - (mE[d] || 0); return acc; });
+            line('est-evol', datas.map(d => fdata(d)), 'Pallets em estoque', evol);
+
+            const comSaldo = cli.filter(o => o.saldo > 0);
+            barH('est-clientes', comSaldo.map(o => o.cliente), comSaldo.map(o => o.saldo), 'Pallets', 10);
+
+            const mL = {}; datas.forEach(d => { mL[d] = (mR[d] || 0) - (mE[d] || 0); });
+            montarQuinzena('est', {
+                saldo: {
+                    l: 'Saldo', titulo: 'Recebido x Expedido por dia', mapa: mL, fmt: sinal,
+                    series: [{ label: 'Recebido', mapa: mR, cor: '#ffffff' }, { label: 'Expedido', mapa: mE, cor: '#1c5976' }]
+                }
+            });
+
+            tabela($('#est-detalhe'), [
+                { k: 'cliente', l: 'Cliente' },
+                { k: 'recebido', l: 'Recebido', r: 1, f: nf },
+                { k: 'expedido', l: 'Expedido', r: 1, f: nf },
+                { k: 'saldo', l: 'Em estoque', r: 1, f: v => `<b>${sinal(v)}</b>` },
+                { k: 'pct', l: '% expedido', r: 1, f: v => nf1(v) + '%' },
+                { k: 'saldo', l: 'Situação', f: v => v < 0 ? '<span class="tag">CONFERIR</span>' : v === 0 ? '<span class="tag ok">ZERADO</span>' : '<span class="tag ok">EM ESTOQUE</span>' }
+            ], cli, 'estoque_por_cliente');
+        }
+
+        /* ====================== DEVOLUÇÃO ====================== */
+        const loaders = { recebimento: carregarRecebimento, expedicao: carregarExpedicao, estoque: carregarEstoque };
+
+        async function carregar() {
+            falhas = [];
+            try { if (loaders[state.tab]) await loaders[state.tab](); }
+            catch (e) { console.error(e); falhas.push(e.message); }
+            const er = $('#erro');
+            if (falhas.length) {
+                er.style.display = 'block';
+                er.innerHTML = `<b>Algumas rotas falharam:</b><br>${[...new Set(falhas)].map(esc).join('<br>')}`;
+            } else er.style.display = 'none';
+            $('#dot').classList.toggle('err', falhas.length > 0);
+            $('#upd').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        $$('.tab').forEach(btn => btn.addEventListener('click', () => {
+            state.tab = btn.dataset.aba;
+            $$('.tab').forEach(b => b.classList.toggle('ativa', b === btn));
+            $$('.painel').forEach(p => p.classList.toggle('ativo', p.id === `painel-${state.tab}`));
+            carregar();
+        }));
+
+        function filtroMudou() {
+            Object.keys(cal).forEach(k => delete cal[k]);   // recalcula a quinzena padrão
+            carregar();
+        }
+        $('#ano').addEventListener('change', e => { state.ano = e.target.value; filtroMudou(); });
+        $('#mes').addEventListener('change', e => { state.mes = e.target.value; filtroMudou(); });
+        $('#limpar').addEventListener('click', () => {
+            state.ano = ''; state.mes = ''; $('#ano').value = ''; $('#mes').value = ''; filtroMudou();
+        });
+        $('#atualizar').addEventListener('click', carregar);
+        $('#excel').addEventListener('click', () => {
+            const qs = new URLSearchParams();
+            if (state.ano) qs.set('ano', state.ano);
+            if (state.mes) qs.set('mes', state.mes);
+            window.location.href = '/api/sebastian/exportar' + (qs.toString() ? '?' + qs : '');
+        });
+
+        // anos disponíveis = anos que aparecem nos dados de recebimento e expedição
+        async function carregarAnos() {
+            const [a, b] = await Promise.all([
+                safe('/api/sebastian/recebimento/carro/por-mes', [], TODOS),
+                safe('/api/sebastian/expedicao/carro/por-mes', [], TODOS)
+            ]);
+            anos = [...new Set([...a, ...b].map(r => String(r.mes).slice(0, 4)).filter(y => /^\d{4}$/.test(y)))].sort();
+            const sel = $('#ano');
+            sel.innerHTML = '<option value="">Todos os anos</option>' + anos.map(y => `<option value="${y}">${y}</option>`).join('');
+            state.ano = anos[anos.length - 1] || '';
+            sel.value = state.ano;
+        }
+
+        (async function init() {
+            await carregarAnos();
+            carregar();
+        })();
+    </script>
+</body>
+
+</html>

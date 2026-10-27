@@ -1,0 +1,1287 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard operacional | Flora</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --blue: #056089;
+            --blue2: #1c5976;
+            --bg: #f3f7f9;
+            --line: #d4e0e6;
+            --text: #173042;
+            --white: #fff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font: 14px Inter, system-ui, Segoe UI, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: #fffffff2;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .bar {
+            max-width: 1440px;
+            margin: auto;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .brand small {
+            display: block;
+            color: var(--blue2);
+            font-weight: 500;
+            letter-spacing: .03em;
+        }
+
+        .logo {
+            height: 54px;
+            max-width: 150px;
+            object-fit: contain;
+        }
+
+        .spacer {
+            flex: 1;
+        }
+
+        main {
+            max-width: 1440px;
+            margin: auto;
+            padding: 24px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        select,
+        input,
+        button {
+            font: inherit;
+        }
+
+        select,
+        input {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 9px 11px;
+            background: white;
+            color: var(--text);
+        }
+
+        .btn,
+        .tab {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 9px 13px;
+            background: var(--blue2);
+            color: white;
+            font-weight: 650;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn:hover,
+        .tab:hover {
+            filter: brightness(1.12);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .tab.active {
+            background: white;
+            color: var(--blue);
+            border-color: var(--blue);
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .card,
+        .box {
+            background: var(--blue);
+            border: 1px solid #d4e0e6;
+            border-radius: 12px;
+            padding: 16px;
+            color: white;
+            min-width: 0;
+        }
+
+        .card small {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            opacity: .9;
+            margin-bottom: 8px;
+        }
+
+        .card b {
+            font-size: 27px;
+            overflow-wrap: anywhere;
+        }
+
+        .card .sub {
+            display: block;
+            font-size: 11px;
+            margin-top: 5px;
+            opacity: .85;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .box h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            margin-bottom: 13px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .wide {
+            grid-column: 1 / -1;
+        }
+
+        .chart {
+            height: 290px;
+            position: relative;
+            min-width: 0;
+        }
+
+        /*
+         * Gráficos diários:
+         * permitem rolagem horizontal sem comprimir as datas.
+         */
+        .chart-scroll {
+            width: 100%;
+            height: 310px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #8bbbd0 #ffffff20;
+        }
+
+        .chart-inner {
+            height: 290px;
+            position: relative;
+            min-width: 100%;
+        }
+
+        .chart-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .chart-scroll::-webkit-scrollbar-thumb {
+            background: #8bbbd0;
+            border-radius: 10px;
+        }
+
+        .chart-scroll::-webkit-scrollbar-track {
+            background: #ffffff20;
+            border-radius: 10px;
+        }
+
+        .tablewrap {
+            overflow: auto;
+            max-height: 390px;
+            border: 1px solid #ffffff70;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: var(--blue2);
+            text-align: left;
+            padding: 10px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 9px 10px;
+            border-top: 1px solid #ffffff30;
+            white-space: nowrap;
+        }
+
+        tbody tr:hover {
+            background: #ffffff12;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 25px;
+            color: #dcebf2;
+        }
+
+        .status {
+            font-size: 11px;
+            color: #536875;
+        }
+
+        .status .dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            background: #48a879;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .error {
+            display: none;
+            background: #fff0f0;
+            border: 1px solid #e9a0a0;
+            color: #8d1717;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 14px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text);
+        }
+
+        .btn-logout {
+            color: #a12b2b;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .secondary {
+            background: #fff;
+            color: var(--blue2);
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        @media(max-width: 800px) {
+            main {
+                padding: 14px;
+            }
+
+            .bar {
+                padding: 12px 14px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .wide {
+                grid-column: auto;
+            }
+
+            .filters {
+                width: 100%;
+            }
+
+            .filters select {
+                flex: 1;
+                min-width: 120px;
+            }
+
+            .brand {
+                font-size: 12px;
+            }
+
+            .logo {
+                height: 42px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <div class="bar">
+        <div class="brand">
+            <img
+                src="{{ url_for('static', filename='img/flora.png') }}"
+                alt="Logo Flora"
+                class="logo"
+                onerror="this.style.display='none'"
+            >
+            <div>
+                Painel <span>Operacional</span><br>
+                Flora
+            </div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="filters">
+            <select id="ano" aria-label="Filtrar ano">
+                <option value="">Todos os anos</option>
+            </select>
+
+            <select id="mes" aria-label="Filtrar mês">
+                <option value="">Todos os meses</option>
+                <option value="01">Janeiro</option>
+                <option value="02">Fevereiro</option>
+                <option value="03">Março</option>
+                <option value="04">Abril</option>
+                <option value="05">Maio</option>
+                <option value="06">Junho</option>
+                <option value="07">Julho</option>
+                <option value="08">Agosto</option>
+                <option value="09">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+            </select>
+
+            <button class="btn secondary" id="limpar" type="button">
+                Limpar
+            </button>
+
+            <button class="btn" id="atualizar" type="button">
+                ↻ Atualizar
+            </button>
+
+            <a class="btn" href="{{ url_for('lancamentos_empresa', empresa_nome='flora') }}">
+                + Lançamentos
+            </a>
+
+            <button class="btn" id="excel" type="button">
+                ⬇ Excel
+            </button>
+
+            <div class="status">
+                <span class="dot" id="dot"></span>
+                <span id="upd">Carregando...</span>
+            </div>
+        </div>
+
+        <div class="user-info">
+            <span>Olá, <strong>{{ usuario_logado }}</strong></span>
+            <a class="btn-logout" href="{{ url_for('logout') }}">Sair</a>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div class="error" id="error"></div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="recebimento">
+            Recebimento
+        </button>
+
+        <button class="tab" data-tab="expedicao">
+            Expedição
+        </button>
+
+        <button class="tab" data-tab="estoque">
+            Estoque
+        </button>
+    </div>
+
+    <!-- RECEBIMENTO -->
+    <section id="recebimento" class="panel">
+        <div class="cards">
+            <div class="card">
+                <small>Cargas recebidas</small>
+                <b id="rec-cargas">—</b>
+            </div>
+
+            <div class="card">
+                <small>Pallets recebidos</small>
+                <b id="rec-pallets">—</b>
+            </div>
+
+            <div class="card">
+                <small>Notas fiscais</small>
+                <b id="rec-notas">—</b>
+            </div>
+
+            <div class="card">
+                <small>Clientes</small>
+                <b id="rec-clientes">—</b>
+            </div>
+
+            <div class="card">
+                <small>Destinos</small>
+                <b id="rec-destinos">—</b>
+            </div>
+
+            <div class="card">
+                <small>Média pallets/carga</small>
+                <b id="rec-media">—</b>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="box wide">
+                <h3>Pallets por dia</h3>
+                <div class="chart-scroll">
+                    <div class="chart-inner" id="rec-dia-inner">
+                        <canvas id="rec-dia"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="box">
+                <h3>Pallets por dia da semana</h3>
+                <div class="chart">
+                    <canvas id="rec-semana"></canvas>
+                </div>
+            </div>
+
+            <div class="box">
+                <h3>Top clientes por pallets</h3>
+                <div class="chart">
+                    <canvas id="rec-cliente"></canvas>
+                </div>
+            </div>
+
+            <div class="box">
+                <h3>Pallets por destino</h3>
+                <div class="chart">
+                    <canvas id="rec-destino"></canvas>
+                </div>
+            </div>
+
+            <div class="box wide">
+                <h3>Detalhes de recebimento</h3>
+                <div id="rec-lista"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- EXPEDIÇÃO -->
+    <section id="expedicao" class="panel" hidden>
+        <div class="cards">
+            <div class="card">
+                <small>Cargas expedidas</small>
+                <b id="exp-cargas">—</b>
+            </div>
+
+            <div class="card">
+                <small>Pallets expedidos</small>
+                <b id="exp-pallets">—</b>
+            </div>
+
+            <div class="card">
+                <small>Notas fiscais</small>
+                <b id="exp-notas">—</b>
+            </div>
+
+            <div class="card">
+                <small>Clientes</small>
+                <b id="exp-clientes">—</b>
+            </div>
+
+            <div class="card">
+                <small>Permanência média</small>
+                <b id="exp-media">—</b>
+                <span class="sub">dias armazenados</span>
+            </div>
+
+            <div class="card">
+                <small>Permanência máxima</small>
+                <b id="exp-max">—</b>
+                <span class="sub">dias armazenados</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="box wide">
+                <h3>Pallets expedidos por dia</h3>
+                <div class="chart-scroll">
+                    <div class="chart-inner" id="exp-dia-inner">
+                        <canvas id="exp-dia"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="box">
+                <h3>Expedição por cliente</h3>
+                <div class="chart">
+                    <canvas id="exp-cliente"></canvas>
+                </div>
+            </div>
+
+            <div class="box">
+                <h3>Expedição por destino</h3>
+                <div class="chart">
+                    <canvas id="exp-destino"></canvas>
+                </div>
+            </div>
+
+            <div class="box">
+                <h3>Faixas de permanência</h3>
+                <div class="chart">
+                    <canvas id="exp-faixas"></canvas>
+                </div>
+            </div>
+
+            <div class="box">
+                <h3>Permanência média por cliente</h3>
+                <div id="exp-permanencia"></div>
+            </div>
+
+            <div class="box wide">
+                <h3>Detalhes de expedição</h3>
+                <div id="exp-lista"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ESTOQUE -->
+    <section id="estoque" class="panel" hidden>
+        <div class="cards">
+            <div class="card">
+                <small>Pallets em estoque</small>
+                <b id="est-saldo">—</b>
+            </div>
+
+            <div class="card">
+                <small>Total recebido</small>
+                <b id="est-recebido">—</b>
+            </div>
+
+            <div class="card">
+                <small>Total expedido</small>
+                <b id="est-expedido">—</b>
+            </div>
+
+            <div class="card">
+                <small>Cargas pendentes</small>
+                <b id="est-cargas">—</b>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="box">
+                <h3>Saldo por cliente</h3>
+                <div class="chart">
+                    <canvas id="est-cliente"></canvas>
+                </div>
+            </div>
+
+            <div class="box">
+                <h3>Cargas pendentes mais antigas</h3>
+                <div id="est-pendentes"></div>
+            </div>
+
+            <div class="box wide">
+                <h3>Posição de estoque por cliente</h3>
+                <div id="est-lista"></div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    const $ = s => document.querySelector(s);
+    const $$ = s => [...document.querySelectorAll(s)];
+
+    const nf = n =>
+        Number(n || 0).toLocaleString("pt-BR");
+
+    const nf1 = n =>
+        Number(n || 0).toLocaleString("pt-BR", {
+            maximumFractionDigits: 1
+        });
+
+    const esc = v =>
+        String(v ?? "—").replace(/[&<>"']/g, c => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[c]));
+
+    const state = {
+        ano: "",
+        mes: "",
+        tab: "recebimento"
+    };
+
+    const charts = {};
+
+    const fmtDate = d => {
+        if (!d) return "—";
+
+        const s = String(d).slice(0, 10);
+        const p = s.split("-");
+
+        return p.length === 3
+            ? `${p[2]}/${p[1]}/${p[0]}`
+            : s;
+    };
+
+    async function api(path, filters = true) {
+        const q = new URLSearchParams();
+
+        if (filters && state.ano) q.set("ano", state.ano);
+        if (filters && state.mes) q.set("mes", state.mes);
+
+        const resposta = await fetch(
+            path + (q.size ? "?" + q : ""),
+            { credentials: "same-origin" }
+        );
+
+        if (resposta.status === 401 || resposta.status === 403) {
+            location.href = "/login";
+            throw new Error("Sessão expirada ou acesso não autorizado.");
+        }
+
+        if (!resposta.ok) {
+            throw new Error(`${path}: HTTP ${resposta.status}`);
+        }
+
+        return resposta.json();
+    }
+
+    async function get(path, filters = true) {
+        return api("/api/flora/" + path, filters);
+    }
+
+    function val(id, v) {
+        const elemento = document.getElementById(id);
+
+        if (elemento) {
+            elemento.textContent = v;
+        }
+    }
+
+    function draw(id, type, labels, datasets, horizontal = false) {
+        if (charts[id]) {
+            charts[id].destroy();
+        }
+
+        const canvas = document.getElementById(id);
+
+        if (!canvas) return;
+
+        charts[id] = new Chart(canvas, {
+            type,
+
+            data: {
+                labels,
+
+                datasets: datasets.map(d => ({
+                    ...d,
+                    backgroundColor: d.backgroundColor || "#ffffff",
+                    borderColor: d.borderColor || "#ffffff",
+                    borderRadius: type === "bar" ? 4 : 0,
+                    tension: 0.25
+                }))
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        display: datasets.length > 1,
+                        labels: {
+                            color: "#fff"
+                        }
+                    }
+                },
+
+                indexAxis: horizontal ? "y" : "x",
+
+                scales: type === "doughnut" ? {} : {
+                    x: {
+                        ticks: { color: "#fff" },
+                        grid: { display: false }
+                    },
+
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: "#fff" },
+                        grid: { color: "#ffffff20" }
+                    }
+                }
+            }
+        });
+    }
+
+    /*
+     * Novo gráfico diário:
+     * - linha em vez de barras;
+     * - datas resumidas no eixo X;
+     * - largura proporcional à quantidade de dias;
+     * - rolagem horizontal quando há muitos registros;
+     * - tooltip com data completa e total de pallets.
+     */
+    function drawDaily(id, rows) {
+        const canvas = document.getElementById(id);
+        const inner = document.getElementById(id + "-inner");
+
+        if (!canvas || !inner) return;
+
+        if (charts[id]) {
+            charts[id].destroy();
+        }
+
+        const dados = [...(rows || [])].sort((a, b) =>
+            String(a.data || "").localeCompare(String(b.data || ""))
+        );
+
+        const datasCompletas = dados.map(item =>
+            String(item.data || "").slice(0, 10)
+        );
+
+        const labels = datasCompletas.map(data => {
+            const partes = data.split("-");
+
+            return partes.length === 3
+                ? `${partes[2]}/${partes[1]}`
+                : data;
+        });
+
+        const valores = dados.map(item =>
+            Number(item.total) || 0
+        );
+
+        const larguraDisponivel =
+            inner.parentElement.clientWidth || 600;
+
+        const larguraMinima = Math.max(
+            larguraDisponivel,
+            labels.length * 48
+        );
+
+        inner.style.width = `${larguraMinima}px`;
+
+        charts[id] = new Chart(canvas, {
+            type: "line",
+
+            data: {
+                labels,
+
+                datasets: [{
+                    label: "Pallets",
+                    data: valores,
+
+                    borderColor: "#ffffff",
+                    backgroundColor: "rgba(255,255,255,0.15)",
+
+                    borderWidth: 2.5,
+                    pointRadius: labels.length > 45 ? 1.5 : 3,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: "#ffffff",
+                    pointBorderColor: "#ffffff",
+
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+
+                interaction: {
+                    intersect: false,
+                    mode: "index"
+                },
+
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+
+                    tooltip: {
+                        callbacks: {
+                            title(items) {
+                                const indice = items[0].dataIndex;
+                                return fmtDate(datasCompletas[indice]);
+                            },
+
+                            label(context) {
+                                return "Pallets: " +
+                                    Number(context.raw || 0)
+                                        .toLocaleString("pt-BR");
+                            }
+                        }
+                    }
+                },
+
+                scales: {
+                    x: {
+                        ticks: {
+                            color: "#ffffff",
+                            autoSkip: true,
+                            maxTicksLimit: 12,
+                            maxRotation: 0,
+                            minRotation: 0
+                        },
+
+                        grid: {
+                            display: false
+                        }
+                    },
+
+                    y: {
+                        beginAtZero: true,
+
+                        ticks: {
+                            color: "#ffffff",
+                            precision: 0
+                        },
+
+                        grid: {
+                            color: "#ffffff20"
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function table(id, cols, rows) {
+        const elemento = document.getElementById(id);
+
+        if (!elemento) return;
+
+        if (!rows || !rows.length) {
+            elemento.innerHTML =
+                '<div class="empty">Nenhum registro encontrado</div>';
+            return;
+        }
+
+        elemento.innerHTML = `
+            <div class="tablewrap">
+                <table>
+                    <thead>
+                        <tr>
+                            ${cols.map(c => `<th>${esc(c[1])}</th>`).join("")}
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${rows.map(r =>
+                            "<tr>" +
+                            cols.map(c => {
+                                const valor = r[c[0]];
+
+                                return `<td>${
+                                    c[2]
+                                        ? c[2](valor, r)
+                                        : esc(valor)
+                                }</td>`;
+                            }).join("") +
+                            "</tr>"
+                        ).join("")}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    function topChart(id, rows, labelKey, valueKey = "total") {
+        const lista = (rows || []).slice(0, 10);
+
+        draw(
+            id,
+            "bar",
+            lista.map(r => r[labelKey] || "—"),
+            [{
+                label: "Pallets",
+                data: lista.map(r => Number(r[valueKey]) || 0)
+            }],
+            true
+        );
+    }
+
+    // =====================================================
+    // RECEBIMENTO
+    // =====================================================
+
+    async function carregarRecebimento() {
+        const [
+            resumo,
+            porDia,
+            porSemana,
+            porCliente,
+            porDestino,
+            lista
+        ] = await Promise.all([
+            get("recebimento/resumo"),
+            get("recebimento/pallet/data"),
+            get("recebimento/pallet/dia-semana"),
+            get("recebimento/pallet/cliente"),
+            get("recebimento/pallet/destino"),
+            get("recebimento/lista")
+        ]);
+
+        const r = resumo[0] || {};
+
+        val("rec-cargas", nf(r.cargas));
+        val("rec-pallets", nf(r.pallets));
+        val("rec-notas", nf(r.notas));
+        val("rec-clientes", nf(r.clientes));
+        val("rec-destinos", nf(r.destinos));
+        val("rec-media", nf1(r.media_pallets));
+
+        drawDaily("rec-dia", porDia);
+
+        draw(
+            "rec-semana",
+            "bar",
+            porSemana.map(x => x.dia_semana),
+            [{
+                label: "Pallets",
+                data: porSemana.map(x => Number(x.total) || 0)
+            }]
+        );
+
+        topChart("rec-cliente", porCliente, "cliente");
+        topChart("rec-destino", porDestino, "destino");
+
+        table("rec-lista", [
+            ["data", "Data", fmtDate],
+            ["cliente", "Cliente"],
+            ["nota_fiscal", "Notas fiscais"],
+            ["cte", "CT-e"],
+            ["pallets", "Pallets", nf],
+            ["destino", "Destino"],
+            ["saida", "Data saída", fmtDate],
+            ["situacao", "Situação"],
+            ["dias", "Dias armazenado", v => v == null ? "—" : nf(v)]
+        ], lista);
+    }
+
+    // =====================================================
+    // EXPEDIÇÃO
+    // =====================================================
+
+    async function carregarExpedicao() {
+        const [
+            resumo,
+            porDia,
+            porCliente,
+            porDestino,
+            faixas,
+            permanencia,
+            lista
+        ] = await Promise.all([
+            get("expedicao/resumo"),
+            get("expedicao/pallet/data"),
+            get("expedicao/pallet/cliente"),
+            get("expedicao/pallet/destino"),
+            get("expedicao/permanencia/faixas"),
+            get("expedicao/permanencia/cliente"),
+            get("recebimento/lista")
+        ]);
+
+        const r = resumo[0] || {};
+
+        val("exp-cargas", nf(r.cargas));
+        val("exp-pallets", nf(r.pallets));
+        val("exp-notas", nf(r.notas));
+        val("exp-clientes", nf(r.clientes));
+        val("exp-media", nf1(r.permanencia_media));
+        val("exp-max", nf(r.permanencia_max));
+
+        drawDaily("exp-dia", porDia);
+
+        topChart("exp-cliente", porCliente, "cliente");
+        topChart("exp-destino", porDestino, "destino");
+
+        draw(
+            "exp-faixas",
+            "bar",
+            faixas.map(x => x.faixa),
+            [{
+                label: "Cargas",
+                data: faixas.map(x => Number(x.total) || 0)
+            }]
+        );
+
+        table("exp-permanencia", [
+            ["cliente", "Cliente"],
+            ["cargas", "Cargas", nf],
+            ["dias_medios", "Média (dias)", nf1]
+        ], permanencia);
+
+        table("exp-lista", [
+            ["data", "Data recebimento", fmtDate],
+            ["cliente", "Cliente"],
+            ["nota_fiscal", "Notas fiscais"],
+            ["pallets", "Pallets", nf],
+            ["destino", "Destino"],
+            ["saida", "Data saída", fmtDate],
+            ["dias", "Dias armazenado", v => v == null ? "—" : nf(v)]
+        ], lista.filter(x => x.situacao === "Expedido"));
+    }
+
+    // =====================================================
+    // ESTOQUE
+    // =====================================================
+
+    async function carregarEstoque() {
+        const [clientes, pendentes] = await Promise.all([
+            get("estoque/por-cliente", false),
+            get("estoque/pendentes", false)
+        ]);
+
+        const recebido = clientes.reduce(
+            (total, r) => total + (Number(r.recebido) || 0), 0
+        );
+
+        const expedido = clientes.reduce(
+            (total, r) => total + (Number(r.expedido) || 0), 0
+        );
+
+        const saldo = clientes.reduce(
+            (total, r) => total + (Number(r.saldo) || 0), 0
+        );
+
+        val("est-saldo", nf(saldo));
+        val("est-recebido", nf(recebido));
+        val("est-expedido", nf(expedido));
+        val("est-cargas", nf(pendentes.length));
+
+        draw(
+            "est-cliente",
+            "bar",
+            clientes.slice(0, 12).map(r => r.cliente || "—"),
+            [{
+                label: "Saldo pallets",
+                data: clientes.slice(0, 12).map(r => Number(r.saldo) || 0)
+            }],
+            true
+        );
+
+        table("est-pendentes", [
+            ["data", "Recebido em", fmtDate],
+            ["cliente", "Cliente"],
+            ["destino", "Destino"],
+            ["pallets", "Pallets", nf],
+            ["dias", "Dias no estoque", nf]
+        ], pendentes.slice(0, 100));
+
+        table("est-lista", [
+            ["cliente", "Cliente"],
+            ["recebido", "Recebido", nf],
+            ["expedido", "Expedido", nf],
+            ["saldo", "Saldo", nf],
+            ["cargas_pendentes", "Cargas pendentes", nf]
+        ], clientes);
+    }
+
+    // =====================================================
+    // ATUALIZAÇÃO E FILTROS
+    // =====================================================
+
+    async function carregar() {
+        const erro = $("#error");
+
+        erro.style.display = "none";
+        erro.textContent = "";
+
+        $("#upd").textContent = "Atualizando...";
+
+        try {
+            if (state.tab === "recebimento") {
+                await carregarRecebimento();
+            }
+
+            if (state.tab === "expedicao") {
+                await carregarExpedicao();
+            }
+
+            if (state.tab === "estoque") {
+                await carregarEstoque();
+            }
+
+            $("#upd").textContent =
+                "Atualizado " +
+                new Date().toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
+
+            $("#dot").style.background = "#48a879";
+        } catch (e) {
+            erro.style.display = "block";
+            erro.textContent = e.message;
+
+            $("#upd").textContent = "Falha ao atualizar";
+            $("#dot").style.background = "#d9534f";
+        }
+    }
+
+    $$(".tab").forEach(botao => {
+        botao.addEventListener("click", () => {
+            state.tab = botao.dataset.tab;
+
+            $$(".tab").forEach(item => {
+                item.classList.toggle("active", item === botao);
+            });
+
+            $$(".panel").forEach(painel => {
+                painel.hidden = painel.id !== state.tab;
+            });
+
+            carregar();
+        });
+    });
+
+    $("#ano").addEventListener("change", evento => {
+        state.ano = evento.target.value;
+        carregar();
+    });
+
+    $("#mes").addEventListener("change", evento => {
+        state.mes = evento.target.value;
+        carregar();
+    });
+
+    $("#limpar").addEventListener("click", () => {
+        state.ano = "";
+        state.mes = "";
+
+        $("#ano").value = "";
+        $("#mes").value = "";
+
+        carregar();
+    });
+
+    $("#atualizar").addEventListener("click", carregar);
+
+    $("#excel").addEventListener("click", () => {
+        const q = new URLSearchParams();
+
+        if (state.ano) q.set("ano", state.ano);
+        if (state.mes) q.set("mes", state.mes);
+
+        location.href =
+            "/api/flora/exportar" +
+            (q.size ? "?" + q.toString() : "");
+    });
+
+    // Carrega os anos disponíveis.
+    async function carregarAnos() {
+        try {
+            const [recebimentos, expedicoes] = await Promise.all([
+                get("recebimento/por-mes", false),
+                get("expedicao/por-mes", false)
+            ]);
+
+            const anos = [
+                ...new Set(
+                    [...recebimentos, ...expedicoes]
+                        .map(item => String(item.mes || "").slice(0, 4))
+                        .filter(ano => /^\d{4}$/.test(ano))
+                )
+            ].sort();
+
+            $("#ano").innerHTML =
+                '<option value="">Todos os anos</option>' +
+                anos.map(ano =>
+                    `<option value="${esc(ano)}">${esc(ano)}</option>`
+                ).join("");
+        } catch (erro) {
+            console.warn("Não foi possível carregar os anos:", erro);
+        }
+    }
+
+    // Recalcula a largura dos gráficos após alteração de tamanho.
+    let resizeTimer;
+
+    window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+
+        resizeTimer = setTimeout(() => {
+            if (state.tab === "recebimento") {
+                drawDailyFromExisting("rec-dia", "rec-dia-inner");
+            }
+
+            if (state.tab === "expedicao") {
+                drawDailyFromExisting("exp-dia", "exp-dia-inner");
+            }
+        }, 200);
+    });
+
+    function drawDailyFromExisting(id, innerId) {
+        const chart = charts[id];
+        const inner = document.getElementById(innerId);
+
+        if (!chart || !inner) return;
+
+        const quantidade = chart.data.labels.length;
+        const largura = Math.max(
+            inner.parentElement.clientWidth || 600,
+            quantidade * 48
+        );
+
+        inner.style.width = `${largura}px`;
+        chart.resize();
+    }
+
+    (async function iniciar() {
+        await carregarAnos();
+        await carregar();
+    })();
+</script>
+</body>
+</html>

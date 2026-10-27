@@ -1,0 +1,72 @@
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# =========================
+# Ambientes virtuais
+# =========================
+venv/
+.venv/
+env/
+ENV/
+
+# =========================
+# Variáveis de ambiente e segredos
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Bancos de dados
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Planilhas e dados operacionais
+# =========================
+*.xlsx
+*.xls
+*.xlsm
+*.csv
+
+# Mantém a pasta xlsx no GitHub, caso tenha arquivos versionáveis
+!xlsx/.gitkeep
+
+# =========================
+# Backups e arquivos temporários
+# =========================
+*.bak
+*.backup
+*.tmp
+*.temp
+*.log
+*.old
+*.orig
+*.swp
+~$*
+
+# =========================
+# Uploads e arquivos gerados
+# =========================
+uploads/
+instance/
+backups/
+temp/
+tmp/
+
+# =========================
+# Editores e sistemas operacionais
+# =========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini

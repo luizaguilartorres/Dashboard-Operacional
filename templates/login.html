@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Dashboard 4log</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ==========================================
+           VARIÁVEIS DE CORES (TEMAS DOS CLIENTES)
+           ========================================== */
+        :root {
+            --btn-font-clr: #2B683E;
+            --bg: #2B683E;
+            --card-bg: #ffffff;
+            --button-hover: #ffffff;
+            --label-color: #2B683E;
+        }
+
+        body.porto {
+            --btn-font-clr: #2A2725;
+            --bg: #2A2725;
+            --card-bg: #ffffff;
+            --button-hover: #ffffff;
+            --label-color: #2A2725;
+        }
+
+        body.sebastian {
+            --btn-font-clr: #056089;
+            --bg: #056089;
+            --card-bg: rgb(255, 255, 255);
+            --button-hover: #ffffff;
+            --label-color: #056089;
+        }
+
+        body.flora {
+            --btn-font-clr: #035A80;
+            --bg: #55A5C7;
+            --card-bg: #ffffff;
+            --button-hover: #ffffff;
+            --label-color: #035A80;
+        }
+
+        body.lego{
+            --btn-font-clr: #62050a;
+            --bg: #c4d14dd2;
+            --card-bg: #ffffff;
+            --button-hover: #ffffff;
+            --label-color: #c4d14dd2;
+        }
+
+        /* Centraliza o card na tela inteira */
+        .login {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: var(--bg);
+            transition: background 0.3s ease;
+        }
+
+        .login-container {
+            width: 340px;
+            background-color: var(--card-bg);
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 24px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            transition: background-color 0.3s ease;
+        }
+
+        .form {
+            width: 100%;
+        }
+
+        .form form {
+            display: flex;
+            flex-direction: column;
+            color: var(--label-color);
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            font-size: 18px;
+            transition: color 0.3s ease;
+        }
+
+        .form form select {
+            height: 35px;
+            border-color: var(--bg);
+            border-radius: 6px;
+            border-style: solid;
+            padding: 0 10px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            margin-bottom: 10px;
+            background-color: white;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .form form label {
+            margin-top: 10px;
+            margin-bottom: 4px;
+            text-align: left;
+        }
+
+        .form form input {
+            height: 35px;
+            border-color: var(--bg);
+            border-radius: 6px;
+            border-style: solid;
+            padding: 0 10px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form form button {
+            margin-top: 24px;
+            background-color: var(--bg);
+            color: #ffffff;
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            border: none;
+            border-radius: 6px;
+            height: 35px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .form form button:hover {
+            background-color: var(--button-hover);
+            color: var(--btn-font-clr);
+            transform: translateY(-2px);
+            border: 2px solid var(--bg);
+        }
+
+        .logo-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 10px;
+        }
+
+        .logo-container img {
+            max-width: 100%;
+            max-height: 80px;
+            object-fit: contain;
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+
+<body class="{% if cliente and cliente != '4log' %}{{ cliente }}{% endif %}">
+    <div class="login">
+        <div class="login-container">
+            <div class="form">
+                <div class="logo-container">
+                    <img id="logoCliente" src="/static/img/{{ cliente or '4log' }}.png" alt="Logo Cliente">
+                </div>
+
+                <!-- Mensagens de erro injetadas pelo Flask -->
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <div class="alert alert-danger" style="color: red; margin-bottom: 15px; font-weight: bold; text-align: center; font-family: Arial, sans-serif; font-size: 14px;">
+                    {% for message in messages %}
+                    {{ message }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="/login" id="loginForm">
+                    <select name="clientes" id="clientes" required>
+                        {% for chave, nome in empresas.items() %}
+                        <option value="{{ chave }}" {% if cliente == chave %}selected{% endif %}>{{ nome }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="usuario">Nome de usuario</label>
+                    <input type="text" id="usuario" name="usuario" placeholder="Digite seu usuario" autocomplete="username" required>
+
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" name="senha" placeholder="Digite sua senha" autocomplete="current-password" required>
+
+                    <button type="submit" id="btn-login">Entrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectClientes = document.getElementById("clientes");
+            const imgLogo = document.getElementById("logoCliente");
+
+            const logos = {
+                '4log': '/static/img/4log.png',
+                'porto': '/static/img/porto.png',
+                'sebastian': '/static/img/sebastian.png',
+                'flora': '/static/img/flora.png',
+                'default': '/static/img/4log.png',
+                'lego':'/static/img/lego_education_logo.png'
+            };
+
+            // Aplica logo e cores do cliente que está selecionado no momento
+            function aplicarCliente() {
+                const cliente = selectClientes.value;
+                imgLogo.src = logos[cliente] || logos['default'];
+                document.body.className = cliente !== '4log' ? cliente : '';
+            }
+
+            selectClientes.addEventListener('change', aplicarCliente);
+            aplicarCliente(); // já aplica ao carregar (ex.: depois de um erro de senha)
+        });
+    </script>
+</body>
+
+</html>
