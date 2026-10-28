@@ -12,6 +12,9 @@ No app.py:
     app.register_blueprint(api_4log)
 """
 
+import csv
+import io
+import re
 import sqlite3
 import xml.etree.ElementTree as ET
 from datetime import date, datetime
@@ -19,7 +22,7 @@ from pathlib import Path
 from decimal import Decimal, InvalidOperation
 import secrets
 
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, Response, jsonify, request, session
 
 # A Flora guarda recebimento e saída na mesma linha (tabela in_out) e tem datas
 # digitadas fora do padrão. A limpeza já existe no api_flora.py; reaproveitamos
@@ -563,6 +566,7 @@ def resumo_clientes():
 
 BANCO_XML = PASTA_DB / "estoque_xml_4log.db"
 MAX_XML_BYTES = 5 * 1024 * 1024  # 5 MB por arquivo
+_DATA_ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def _conectar_estoque_xml():
@@ -973,14 +977,76 @@ def resumo_estoque_xml():
             })
         lista_global.sort(key=lambda p: (p["descricao"] or "").casefold())
 
-        notas = conn.execute("""
+        # Filtros opcionais da lista de notas (tipo, busca, período e limite).
+        filtros_notas = ["1=1"]
+        params_notas = []
+        tipo_filtro = request.args.get("tipo", "").strip().lower()
+        if tipo_filtro in ("entrada", "saida"):
+            filtros_notas.append("tipo_movimento = ?")
+            params_notas.append(tipo_filtro)
+        busca = request.args.get("busca", "").strip()[:80]
+        if busca:
+            like = "%" + busca.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+            filtros_notas.append(
+                "(numero LIKE ? ESCAPE '\\' OR emitente LIKE ? ESCAPE '\\' "
+                "OR destinatario LIKE ? ESCAPE '\\' OR chave LIKE ? ESCAPE '\\' "
+                "OR emitente_cnpj LIKE ? ESCAPE '\\')"
+            )
+            params_notas.extend([like] * 5)
+        for param, operador in (("data_ini", ">="), ("data_fim", "<=")):
+            valor_data = request.args.get(param, "").strip()
+            if _DATA_ISO.match(valor_data):
+                filtros_notas.append(f"substr(data_emissao, 1, 10) {operador} ?")
+                params_notas.append(valor_data)
+        try:
+            limite_notas = min(max(int(request.args.get("limite", 30)), 1), 500)
+        except ValueError:
+            limite_notas = 30
+        where_notas = " AND ".join(filtros_notas)
+
+        notas_filtradas = conn.execute(
+            f"SELECT COUNT(*) FROM notas_xml WHERE {where_notas}", params_notas
+        ).fetchone()[0]
+        notas = conn.execute(f"""
             SELECT chave, numero, serie, data_emissao, emitente,
                    COALESCE(emitente_cnpj, '') AS emitente_cnpj, destinatario,
-                   valor_total, tipo_movimento, nome_arquivo, importado_em
+                   valor_total, tipo_movimento, nome_arquivo, importado_em,
+                   (SELECT COUNT(*) FROM itens_xml i WHERE i.chave = notas_xml.chave) AS qtd_itens
             FROM notas_xml
+            WHERE {where_notas}
             ORDER BY COALESCE(data_emissao, '') DESC, importado_em DESC
-            LIMIT 30
-        """).fetchall()
+            LIMIT {limite_notas}
+        """, params_notas).fetchall()
+
+        # Totais por tipo de movimento (considera todas as notas importadas).
+        por_tipo = {"entrada": (0, 0.0), "saida": (0, 0.0)}
+        for linha in conn.execute("""
+            SELECT tipo_movimento, COUNT(*), COALESCE(SUM(valor_total), 0)
+            FROM notas_xml GROUP BY tipo_movimento
+        """):
+            por_tipo[linha[0]] = (linha[1], float(linha[2] or 0))
+
+        # Série mensal (últimos 12 meses com notas) de valor fiscal por movimento.
+        mensal_map = {}
+        for linha in conn.execute("""
+            SELECT substr(data_emissao, 1, 7) AS mes, tipo_movimento,
+                   COUNT(*), COALESCE(SUM(valor_total), 0)
+            FROM notas_xml
+            WHERE length(COALESCE(data_emissao, '')) >= 7
+            GROUP BY mes, tipo_movimento
+        """):
+            item = mensal_map.setdefault(linha[0], {
+                "mes": linha[0], "entrada": 0.0, "saida": 0.0,
+                "notas_entrada": 0, "notas_saida": 0,
+            })
+            item[linha[1]] = round(float(linha[3] or 0), 2)
+            item["notas_" + linha[1]] = linha[2]
+        mensal = [mensal_map[m] for m in sorted(mensal_map)][-12:]
+
+        top_produtos = sorted(
+            (p for p in lista_global if p["valor_estimado"] > 0),
+            key=lambda p: p["valor_estimado"], reverse=True,
+        )[:8]
 
         return jsonify({
             "resumo": {
@@ -990,10 +1056,17 @@ def resumo_estoque_xml():
                 "produtos_negativos": produtos_negativos_geral,
                 "valor_estoque_estimado": round(valor_estoque_geral, 2),
                 "clientes_com_estoque": sum(1 for c in lista_clientes if c["valor_estoque_estimado"] > 0),
+                "notas_entrada": por_tipo["entrada"][0],
+                "notas_saida": por_tipo["saida"][0],
+                "valor_entradas": round(por_tipo["entrada"][1], 2),
+                "valor_saidas": round(por_tipo["saida"][1], 2),
             },
             "clientes": lista_clientes,
             "produtos": lista_global,
+            "mensal": mensal,
+            "top_produtos": top_produtos,
             "notas": [dict(n) for n in notas],
+            "notas_filtradas": notas_filtradas,
             "observacao": (
                 "O ranking identifica cada cliente pelo CNPJ/CPF do emitente da NF-e; "
                 "se o documento não estiver disponível, usa o nome do emitente. O estoque "
@@ -1022,3 +1095,111 @@ def excluir_nota_xml(chave):
     finally:
         conn.close()
 
+
+@api_4log.route("/api/4log/estoque-xml/notas/<chave>", methods=["GET"])
+def detalhe_nota_xml(chave):
+    """Retorna o cabeçalho e os itens de uma nota importada."""
+    conn = _conectar_estoque_xml()
+    try:
+        nota = conn.execute("""
+            SELECT chave, numero, serie, data_emissao, emitente,
+                   COALESCE(emitente_cnpj, '') AS emitente_cnpj, destinatario,
+                   valor_total, tipo_movimento, nome_arquivo, importado_em
+            FROM notas_xml WHERE chave = ?
+        """, (chave,)).fetchone()
+        if nota is None:
+            return jsonify(erro="Nota não encontrada."), 404
+        itens = conn.execute("""
+            SELECT codigo, descricao, ncm, cfop, unidade,
+                   quantidade, valor_unitario, valor_total
+            FROM itens_xml WHERE chave = ? ORDER BY id
+        """, (chave,)).fetchall()
+        return jsonify(nota=dict(nota), itens=[dict(i) for i in itens])
+    finally:
+        conn.close()
+
+
+@api_4log.route("/api/4log/estoque-xml/notas/<chave>/tipo", methods=["POST"])
+def alterar_tipo_nota_xml(chave):
+    """Corrige o tipo de movimento de uma nota sem precisar reimportar o XML."""
+    if not _validar_csrf_xml():
+        return jsonify(erro="Sessão de segurança expirada. Atualize a página e tente novamente."), 400
+
+    corpo = request.get_json(silent=True) or {}
+    tipo = str(corpo.get("tipo_movimento", "")).strip().lower()
+    if tipo not in ("entrada", "saida"):
+        return jsonify(erro="Tipo de movimento inválido."), 400
+
+    conn = _conectar_estoque_xml()
+    try:
+        cursor = conn.execute(
+            "UPDATE notas_xml SET tipo_movimento = ? WHERE chave = ?", (tipo, chave)
+        )
+        conn.commit()
+        if cursor.rowcount == 0:
+            return jsonify(erro="Nota não encontrada."), 404
+        return jsonify(mensagem="Tipo de movimento atualizado.", tipo_movimento=tipo)
+    finally:
+        conn.close()
+
+
+def _celula_csv(valor):
+    """Formata para CSV pt-BR e neutraliza fórmulas vindas de textos do XML."""
+    if isinstance(valor, bool) or valor is None:
+        return ""
+    if isinstance(valor, (int, float)):
+        return str(round(valor, 4)).replace(".", ",")
+    texto = str(valor)
+    if texto[:1] in ("=", "+", "-", "@", "\t", "\r"):
+        texto = "'" + texto
+    return texto
+
+
+@api_4log.route("/api/4log/estoque-xml/exportar", methods=["GET"])
+def exportar_xml_estoque():
+    """
+    Exporta CSV (separador ';', abre direto no Excel).
+    conteudo=estoque  -> produtos (use cliente=<chave> para um só cliente)
+    conteudo=notas    -> notas importadas, respeitando os filtros de /resumo
+    """
+    conteudo = request.args.get("conteudo", "estoque")
+    dados = resumo_estoque_xml().get_json()
+    buffer = io.StringIO()
+    escritor = csv.writer(buffer, delimiter=";")
+
+    if conteudo == "notas":
+        escritor.writerow([
+            "Data", "Número", "Série", "Movimento", "Emitente", "CNPJ/CPF emitente",
+            "Destinatário", "Itens", "Valor da NF-e", "Chave de acesso", "Arquivo",
+        ])
+        for n in dados["notas"]:
+            escritor.writerow([_celula_csv(v) for v in (
+                n["data_emissao"], n["numero"], n["serie"],
+                "Entrada" if n["tipo_movimento"] == "entrada" else "Saída",
+                n["emitente"], n["emitente_cnpj"], n["destinatario"],
+                n["qtd_itens"], n["valor_total"], n["chave"], n["nome_arquivo"],
+            )])
+        nome_base = "notas_xml_4log"
+    else:
+        cliente = request.args.get("cliente", "").strip()
+        escritor.writerow([
+            "Cliente", "CNPJ/CPF", "Código", "Produto", "NCM", "Unidade",
+            "Entradas", "Saídas", "Saldo", "Custo médio", "Valor estimado",
+        ])
+        for c in dados["clientes"]:
+            if cliente and c["chave"] != cliente:
+                continue
+            for p in c["produtos_detalhe"]:
+                escritor.writerow([_celula_csv(v) for v in (
+                    c["nome"], c["cnpj"], p["codigo"], p["descricao"], p["ncm"],
+                    p["unidade"], p["qtd_entrada"], p["qtd_saida"], p["saldo"],
+                    p["custo_medio"], p["valor_estimado"],
+                )])
+        nome_base = "estoque_xml_4log"
+
+    nome = f"{nome_base}_{date.today().isoformat()}.csv"
+    return Response(
+        "\ufeff" + buffer.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{nome}"'},
+    )
