@@ -393,6 +393,10 @@
         <div class="card">
             <h3>Últimos lançamentos <span id="lista-tipo" style="text-transform:none;letter-spacing:0"></span></h3>
             <div id="lista"></div>
+            <div class="acoes" id="mais-acoes" style="justify-content:center; margin-top:14px; display:none">
+                <button type="button" class="btn" id="ver-mais">Ver mais lançamentos</button>
+                <span class="dica" id="mais-info"></span>
+            </div>
         </div>
     </main>
 
@@ -465,8 +469,8 @@
             },
             etiquetas: {
                 nome: 'Etiquetas',
-                cabecalho: ['cliente', 'solicitacao', 'agenda', 'operador'],
-                linha: ['pedido', 'pallets', 'caixas', 'tamanho', 'inicio', 'conclusao', 'etiquetadas'],
+                cabecalho: ['cliente', 'solicitacao', 'agenda'],
+                linha: ['pedido', 'pallets', 'caixas', 'tamanho', 'operador', 'inicio', 'conclusao', 'etiquetadas'],
                 obrigatorios: ['pedido', 'cliente', 'solicitacao', 'pallets', 'caixas', 'tamanho'],
                 manter: ['solicitacao', 'agenda', 'cliente', 'tamanho', 'operador']
             },
@@ -483,7 +487,10 @@
         const fdata = d => { const p = String(d || '').slice(0, 10).split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : '—'; };
         let tipo = 'recebimento';
         let linhasLista = {};
-        const fdh = v => { if (!v) return '—'; const [d, h] = String(v).split(/[ T]/); const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]} ${(h || '').slice(0, 5)}`.trim(); };
+        const LIMITE_INICIAL = 40;
+        const PASSO_LIMITE = 40;
+        let limiteLista = LIMITE_INICIAL;
+        let fdh = v => { if (!v) return '—'; const [d, h] = String(v).split(/[ T]/); const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]} ${(h || '').slice(0, 5)}`.trim(); };
         const fval = (c, v) => {
             const t = F[c].tipo;
             if (v == null || v === '') return '—';
@@ -544,6 +551,9 @@
 
         function addLinha() {
             const T = TIPOS[tipo];
+            // nova linha já vem com o operador da linha anterior (dá para trocar)
+            const opAnterior = $('#linhas .linha:last-child [data-c="operador"]');
+            const valorOp = opAnterior ? opAnterior.value : '';
             const div = document.createElement('div');
             div.className = 'linha';
             div.innerHTML = T.linha.map(c => campo(c, T.obrigatorios.includes(c))).join('')
@@ -552,6 +562,8 @@
                 if ($('#linhas').children.length > 1) div.remove();
             });
             $('#linhas').appendChild(div);
+            const novoOp = div.querySelector('[data-c="operador"]');
+            if (novoOp && valorOp) novoOp.value = valorOp;
             const primeiro = div.querySelector('input'); if ($('#linhas').children.length > 1) primeiro.focus();
         }
 
@@ -577,7 +589,7 @@
                 if (!r.ok) { msg(j.erro || `Erro HTTP ${r.status}`); return; }
                 const manter = T.manter || ['data', 'hora', 'cliente', 'transportadora', 'num_cte', 'romaneio', 'tipo_do_veiculo', 'destino'];
                 // limpa só o que muda de um lançamento para o outro; mantém o cabeçalho para agilizar
-                document.querySelectorAll('#linhas .linha').forEach((l, i) => i ? l.remove() : l.querySelectorAll('input').forEach(x => x.value = ''));
+                document.querySelectorAll('#linhas .linha').forEach((l, i) => i ? l.remove() : l.querySelectorAll('input').forEach(x => { if (x.dataset.c !== 'operador') x.value = ''; }));
                 if (!T.linha.length) $('#cabecalho').querySelectorAll('input').forEach(x => { if (!manter.includes(x.dataset.c)) x.value = ''; });
                 (T.limpar || []).forEach(n => { const i = $(`#cabecalho [data-c="${n}"]`); if (i) i.value = ''; });
                 const dp = $('#dica-placa'); if (dp) { dp.textContent = ''; dp.className = 'dica'; }
@@ -593,8 +605,9 @@
             const T = TIPOS[tipo];
             $('#lista-tipo').textContent = `· ${T.nome}`;
             const cols = [...new Set([...T.cabecalho, ...T.linha])];
+            $('#mais-acoes').style.display = 'none';
             try {
-                const r = await fetch(`/api/porto/lancamentos/${tipo}?limite=40`);
+                const r = await fetch(`/api/porto/lancamentos/${tipo}?limite=${limiteLista}`);
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 const rows = await r.json();
                 linhasLista = Object.fromEntries(rows.map(o => [String(o.id), o]));
@@ -604,8 +617,25 @@
                     <td>${esc(o.lancado_por ?? '—')}</td><td>${fdh(o.lancado_em)}</td>
                     <td><button class="btn" data-editar="${o.id}">Editar</button> <button class="btn perigo" data-id="${o.id}">Apagar</button></td></tr>`).join('')}</tbody></table></div>`
                     : '<div class="vazio">Nenhum lançamento ainda</div>';
-            } catch (e) { $('#lista').innerHTML = `<div class="vazio">Não foi possível carregar (${esc(e.message)})</div>`; }
+
+                // If the API returns as many rows as requested, there may be more to show.
+                if (rows.length >= limiteLista) {
+                    $('#mais-acoes').style.display = 'flex';
+                    $('#mais-info').textContent = `${rows.length} lançamentos carregados`;
+                }
+            } catch (e) {
+                $('#lista').innerHTML = `<div class="vazio">Não foi possível carregar (${esc(e.message)})</div>`;
+            }
         }
+
+        $('#ver-mais').addEventListener('click', async () => {
+            limiteLista += PASSO_LIMITE;
+            $('#ver-mais').disabled = true;
+            $('#ver-mais').textContent = 'Carregando…';
+            await carregarLista();
+            $('#ver-mais').disabled = false;
+            $('#ver-mais').textContent = 'Ver mais lançamentos';
+        });
 
         function edMsg(t) { const m = $('#ed-msg'); m.textContent = t; m.className = 'msg' + (t ? ' erro' : ''); }
 
@@ -678,6 +708,7 @@
         $('#tabs').addEventListener('click', e => {
             const b = e.target.closest('.tab'); if (!b) return;
             tipo = b.dataset.t;
+            limiteLista = LIMITE_INICIAL;
             document.querySelectorAll('.tab').forEach(x => x.classList.toggle('ativa', x === b));
             montarForm(); carregarLista();
         });

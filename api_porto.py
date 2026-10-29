@@ -826,8 +826,8 @@ LANC = {
     "etiquetas": {
         "nome": "Etiquetas",
         # cabeçalho = o que se repete; linha = um pedido (ou um tamanho de etiqueta do pedido)
-        "cabecalho": ["cliente", "solicitacao", "agenda", "operador"],
-        "linha": ["pedido", "pallets", "caixas", "tamanho", "inicio", "conclusao", "etiquetadas"],
+        "cabecalho": ["cliente", "solicitacao", "agenda"],
+        "linha": ["pedido", "pallets", "caixas", "tamanho", "operador", "inicio", "conclusao", "etiquetadas"],
         "obrigatorios": ["pedido", "cliente", "solicitacao", "pallets", "caixas", "tamanho"],
         # nome do campo -> coluna real no banco (quando é diferente)
         "colunas": {"pedido": "numero_do_pedido", "solicitacao": "data_solicitacao", "agenda": "data_agenda",

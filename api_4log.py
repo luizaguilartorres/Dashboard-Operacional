@@ -1,17 +1,3 @@
-"""
-API gerencial da 4Log.
-
-Mostra indicadores resumidos de cada cliente da operadora logística.
-As bases ficam na pasta db/:
-    db/dados_base_porto.db
-    db/dados_base_sebastian.db
-    db/dados_base_flora.db   (tabela única "in_out": recebimento e saída na mesma linha)
-
-No app.py:
-    from api_4log import api_4log
-    app.register_blueprint(api_4log)
-"""
-
 import csv
 import io
 import re
@@ -914,6 +900,31 @@ def resumo_estoque_xml():
             else:
                 produto["qtd_saida"] += qtd
 
+        # Pico histórico do valor de estoque (consolidado por SKU), medido no fim de cada dia.
+        sku_estado = {}
+        valor_corrente = 0.0
+        pico_valor, pico_data, dia_atual = 0.0, "", None
+        for linha in movimentos:
+            dia = (linha["data_emissao"] or "")[:10]
+            if dia_atual is not None and dia != dia_atual and valor_corrente > pico_valor:
+                pico_valor, pico_data = valor_corrente, dia_atual
+            dia_atual = dia
+            est = sku_estado.setdefault((linha["codigo"], linha["unidade"]), {
+                "ent": 0.0, "sai": 0.0, "val_ent": 0.0, "valor": 0.0,
+            })
+            qtd = float(linha["quantidade"] or 0)
+            if linha["tipo_movimento"] == "entrada":
+                est["ent"] += qtd
+                est["val_ent"] += float(linha["valor_total"] or 0)
+            else:
+                est["sai"] += qtd
+            custo = est["val_ent"] / est["ent"] if est["ent"] > 0 else 0.0
+            novo_valor = max(est["ent"] - est["sai"], 0) * custo
+            valor_corrente += novo_valor - est["valor"]
+            est["valor"] = novo_valor
+        if dia_atual is not None and valor_corrente > pico_valor:
+            pico_valor, pico_data = valor_corrente, dia_atual
+
         lista_clientes = []
         todos_produtos = {}
         valor_estoque_geral = 0.0
@@ -976,6 +987,10 @@ def resumo_estoque_xml():
                 "notas": len(p["notas"]),
             })
         lista_global.sort(key=lambda p: (p["descricao"] or "").casefold())
+        # Valor e saldos negativos gerais usam o estoque consolidado por SKU (todos os CNPJs),
+        # para um CNPJ com saldo negativo abater o saldo positivo do outro.
+        valor_estoque_geral = sum(p["valor_estimado"] for p in lista_global)
+        produtos_negativos_geral = sum(1 for p in lista_global if p["saldo"] < 0)
 
         # Filtros opcionais da lista de notas (tipo, busca, período e limite).
         filtros_notas = ["1=1"]
@@ -1055,6 +1070,8 @@ def resumo_estoque_xml():
                 "produtos": len(lista_global),
                 "produtos_negativos": produtos_negativos_geral,
                 "valor_estoque_estimado": round(valor_estoque_geral, 2),
+                "valor_pico_estoque": round(pico_valor, 2),
+                "data_pico_estoque": pico_data,
                 "clientes_com_estoque": sum(1 for c in lista_clientes if c["valor_estoque_estimado"] > 0),
                 "notas_entrada": por_tipo["entrada"][0],
                 "notas_saida": por_tipo["saida"][0],

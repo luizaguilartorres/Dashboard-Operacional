@@ -303,6 +303,77 @@
       margin-top: 7px
     }
 
+    .cards-xml {
+      grid-template-columns: repeat(4, minmax(0, 1fr))
+    }
+
+    .cards-xml .card-destaque {
+      grid-column: span 2
+    }
+
+    .cards-xml .card b {
+      overflow-wrap: normal;
+      word-break: normal
+    }
+
+    @media(max-width:900px) {
+      .cards-xml {
+        grid-template-columns: repeat(2, minmax(0, 1fr))
+      }
+    }
+
+    .rank-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 4px 14px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line)
+    }
+
+    .rank-item:last-child {
+      border-bottom: 0
+    }
+
+    .rank-nome {
+      font-weight: 650;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .rank-cod {
+      color: var(--muted);
+      font-size: 11px
+    }
+
+    .rank-valor {
+      text-align: right;
+      font-weight: 800;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums
+    }
+
+    .rank-pct {
+      text-align: right;
+      color: var(--muted);
+      font-size: 11px
+    }
+
+    .rank-barra {
+      grid-column: 1/-1;
+      height: 6px;
+      background: var(--accent-soft);
+      border-radius: 4px;
+      overflow: hidden
+    }
+
+    .rank-barra i {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+      border-radius: 4px
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -611,9 +682,11 @@
         </div>
       </div>
 
-      <div class="cards">
-        <div class="card"><small>Valor estimado do estoque</small><b id="xml-valor-estoque">R$ 0,00</b><span
-            class="sub">Custo médio dos XMLs de entrada</span></div>
+      <div class="cards cards-xml">
+        <div class="card card-destaque"><small>Valor estimado do estoque</small><b id="xml-valor-estoque">R$
+            0,00</b><span class="sub">Custo médio dos XMLs de entrada</span></div>
+        <div class="card"><small>Pico do estoque</small><b id="xml-valor-pico">R$ 0,00</b><span class="sub"
+            id="xml-data-pico">Maior valor já atingido</span></div>
         <div class="card"><small>Produtos cadastrados</small><b id="xml-qtd-produtos">0</b></div>
         <div class="card"><small>Clientes com estoque</small><b id="xml-qtd-clientes">0</b></div>
         <div class="card"><small>Notas importadas</small><b id="xml-qtd-notas">0</b><span class="sub"
@@ -634,7 +707,7 @@
         </section>
         <section class="box">
           <h3>Maiores valores em estoque (produtos)</h3>
-          <div class="chart"><canvas id="graf-xml-top"></canvas></div>
+          <div id="xml-top-lista"></div>
           <p class="status" id="xml-top-vazio"></p>
         </section>
       </div>
@@ -652,12 +725,11 @@
                 <th>Produtos</th>
                 <th>Saldo negativo</th>
                 <th>Valor estimado</th>
-                <th>Detalhes</th>
               </tr>
             </thead>
             <tbody id="xml-ranking">
               <tr>
-                <td colspan="8" class="empty">Carregando ranking...</td>
+                <td colspan="7" class="empty">Carregando ranking...</td>
               </tr>
             </tbody>
           </table>
@@ -669,14 +741,10 @@
       <section class="box" style="margin-bottom:16px">
         <div
           style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px">
-          <h3 style="margin:0">Detalhes do estoque por cliente</h3>
-          <select id="xml-cliente-selecionado" aria-label="Selecionar cliente para detalhar"
-            style="min-width:min(100%,320px)">
-            <option value="">Selecione um cliente</option>
-          </select>
+          <h3 style="margin:0">Estoque completo (consolidado por SKU)</h3>
         </div>
         <div class="summary" style="margin-bottom:15px">
-          <div class="summary-item"><small>Cliente selecionado</small><strong id="xml-detalhe-nome">—</strong>
+          <div class="summary-item"><small>Estoque</small><strong id="xml-detalhe-nome">Todos os CNPJs</strong>
             <div class="status" id="xml-detalhe-cnpj"></div>
           </div>
           <div class="summary-item"><small>Valor estimado do estoque</small><strong id="xml-detalhe-valor">R$
@@ -686,7 +754,7 @@
         </div>
         <div
           style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px">
-          <h3 style="margin:0">Produtos do cliente selecionado</h3>
+          <h3 style="margin:0">Produtos</h3>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <input id="buscar-produto-xml" type="search" placeholder="Buscar código, descrição ou NCM..."
               style="border:1px solid var(--line);border-radius:8px;padding:10px;min-width:min(100%,240px);background:var(--panel);color:var(--text)">
@@ -877,7 +945,7 @@
 
     const moeda = v => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    let produtosXML = [], clientesXML = [];
+    let produtosXML = [], clientesXML = [], produtosGlobaisXML = [];
     let mostrarTodosProdutosXML = false;
     const LIMITE_PRODUTOS_XML = 5;
     async function carregarEstoqueXML() {
@@ -889,7 +957,10 @@
         if (!r.ok) throw new Error('Não foi possível consultar o estoque XML (HTTP ' + r.status + ').');
         const d = await r.json(), s = d.resumo || {};
         clientesXML = d.clientes || [];
+        produtosGlobaisXML = d.produtos || [];
         $('#xml-valor-estoque').textContent = moeda(s.valor_estoque_estimado);
+        $('#xml-valor-pico').textContent = moeda(s.valor_pico_estoque);
+        $('#xml-data-pico').textContent = s.data_pico_estoque ? 'Maior valor já atingido, em ' + s.data_pico_estoque.split('-').reverse().join('/') : 'Maior valor já atingido';
         $('#xml-qtd-produtos').textContent = fmt(s.produtos);
         $('#xml-qtd-clientes').textContent = fmt(s.clientes_com_estoque);
         $('#xml-qtd-notas').textContent = fmt(s.notas_importadas);
@@ -900,13 +971,9 @@
         $('#xml-valor-entradas').textContent = 'Valor fiscal: ' + moeda(s.valor_entradas);
         $('#xml-valor-saidas').textContent = 'Valor fiscal: ' + moeda(s.valor_saidas);
         $('#xml-observacao').textContent = d.observacao || '';
-        renderGraficosXML(d.mensal || [], d.top_produtos || []);
+        renderGraficosXML(d.mensal || [], d.top_produtos || [], s.valor_estoque_estimado);
         renderRankingXML();
-        const select = $('#xml-cliente-selecionado'), selecionado = select.value;
-        select.innerHTML = '<option value="">Selecione um cliente</option>' + clientesXML.map(c => `<option value="${esc(c.chave)}">${esc(c.nome)}${c.cnpj ? ' — ' + esc(c.cnpj) : ''}</option>`).join('');
-        if (clientesXML.some(c => c.chave === selecionado)) select.value = selecionado;
-        else if (clientesXML.length) select.value = clientesXML[0].chave;
-        mostrarClienteXML(select.value);
+        mostrarEstoqueXML();
         const notas = d.notas || [];
         $('#xml-notas').innerHTML = notas.map(n => `<tr>
         <td>${fmtData(n.data_emissao)}</td><td>${esc(n.numero || '—')}/${esc(n.serie || '—')}</td>
@@ -935,16 +1002,20 @@
       return qs.toString();
     }
     function temFiltroNotasXML() { return ['#xml-filtro-tipo', '#xml-busca-nota', '#xml-data-ini', '#xml-data-fim'].some(s => $(s) && $(s).value.trim()); }
-    function renderGraficosXML(mensal, top) {
-      const vazioM = $('#xml-mensal-vazio'), vazioT = $('#xml-top-vazio');
-      vazioM.textContent = mensal.length ? 'Baseado na data de emissão das notas importadas (últimos 12 meses com notas).' : 'Importe notas para visualizar a evolução mensal.';
-      vazioT.textContent = top.length ? 'Valor estimado = saldo positivo × custo médio das entradas.' : 'Nenhum produto com saldo positivo.';
+    const moedaCurta = v => { const n = Number(v || 0), a = Math.abs(n); return a >= 1e6 ? 'R$ ' + (n / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' mi' : a >= 1e3 ? 'R$ ' + (n / 1e3).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' mil' : moeda(n); };
+    function renderGraficosXML(mensal, top, totalEstoque) {
+      $('#xml-mensal-vazio').textContent = mensal.length ? 'Valor fiscal das notas por mês de emissão (últimos 12 meses com notas).' : 'Importe notas para visualizar a evolução mensal.';
       graf('graf-xml-mensal', 'bar', mensal.map(m => fmtMes(m.mes)), [
-        { label: 'Entradas (R$)', data: mensal.map(m => m.entrada), backgroundColor: '#4b9870', borderRadius: 5 },
-        { label: 'Saídas (R$)', data: mensal.map(m => m.saida), backgroundColor: '#d89b43', borderRadius: 5 }]);
-      graf('graf-xml-top', 'bar', top.map(p => String(p.descricao || p.codigo).slice(0, 28)), [
-        { label: 'Valor estimado (R$)', data: top.map(p => p.valor_estimado), backgroundColor: '#4b9870', borderRadius: 5 }]);
-      const g = charts['graf-xml-top']; if (g) { g.options.indexAxis = 'y'; g.update(); }
+        { label: 'Entradas', data: mensal.map(m => m.entrada), backgroundColor: '#4b9870', borderRadius: 5, maxBarThickness: 48 },
+        { label: 'Saídas', data: mensal.map(m => m.saida), backgroundColor: '#d89b43', borderRadius: 5, maxBarThickness: 48 }]);
+      const g = charts['graf-xml-mensal'];
+      if (g) { g.options.scales.y.ticks = { callback: v => moedaCurta(v) }; g.options.plugins.legend.position = 'bottom'; g.options.plugins.tooltip = { callbacks: { label: c => ` ${c.dataset.label}: ${moeda(c.parsed.y)}` } }; g.update(); }
+      const maximo = Math.max(...top.map(p => p.valor_estimado), 0) || 1, total = Number(totalEstoque || 0);
+      $('#xml-top-lista').innerHTML = top.map((p, i) => `<div class="rank-item">
+      <div><div class="rank-nome" title="${esc(p.descricao)}">${i + 1}. ${esc(p.descricao || p.codigo)}</div><div class="rank-cod">${esc(p.codigo)} · saldo ${fmt(p.saldo)} ${esc(p.unidade)}</div></div>
+      <div><div class="rank-valor">${moeda(p.valor_estimado)}</div><div class="rank-pct">${total ? (p.valor_estimado / total * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '% do estoque' : ''}</div></div>
+      <div class="rank-barra"><i style="width:${Math.max(2, p.valor_estimado / maximo * 100).toFixed(1)}%"></i></div></div>`).join('') || '<div class="empty">Nenhum produto com saldo positivo.</div>';
+      $('#xml-top-vazio').textContent = top.length ? 'Valor estimado = saldo positivo × custo médio das entradas. Porcentagem sobre o valor total estimado do estoque.' : '';
     }
     function renderRankingXML() {
       $('#xml-ranking').innerHTML = clientesXML.map((c, i) => `<tr>
@@ -952,18 +1023,20 @@
       <td class="num">${fmt(c.notas_importadas)}</td><td class="num">${fmt(c.produtos)}</td>
       <td class="num" style="${c.produtos_negativos ? 'color:#b42318;font-weight:800' : ''}">${fmt(c.produtos_negativos)}</td>
       <td class="num">${moeda(c.valor_estoque_estimado)}</td>
-      <td><button type="button" class="btn" data-cliente-xml="${esc(c.chave)}">Ver estoque</button></td>
-    </tr>`).join('') || '<tr><td colspan="8" class="empty">Ainda não há XMLs importados. Importe notas para montar o ranking.</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="7" class="empty">Ainda não há XMLs importados. Importe notas para montar o ranking.</td></tr>';
     }
-    function mostrarClienteXML(chave) {
-      const c = clientesXML.find(x => x.chave === chave);
-      if (!c) { produtosXML = []; $('#xml-detalhe-nome').textContent = '—'; $('#xml-detalhe-cnpj').textContent = ''; $('#xml-detalhe-valor').textContent = moeda(0); $('#xml-detalhe-resumo').textContent = 'Nenhum cliente selecionado'; renderProdutosXML(); return; }
-      produtosXML = c.produtos_detalhe || [];
+    // A API já devolve o estoque consolidado por SKU (todos os CNPJs somados).
+    function consolidarPorSku() { return (produtosGlobaisXML || []).map(p => ({ ...p })); }
+    function mostrarEstoqueXML() {
+      produtosXML = consolidarPorSku();
       mostrarTodosProdutosXML = false;
-      $('#xml-detalhe-nome').textContent = c.nome || 'Emitente não identificado';
-      $('#xml-detalhe-cnpj').textContent = c.cnpj ? 'CNPJ/CPF: ' + c.cnpj : 'Documento não informado no XML';
-      $('#xml-detalhe-valor').textContent = moeda(c.valor_estoque_estimado);
-      $('#xml-detalhe-resumo').textContent = `${fmt(c.produtos)} produto(s) · ${fmt(c.notas_importadas)} nota(s) · ${fmt(c.produtos_negativos)} saldo(s) negativo(s)`;
+      const cnpjs = new Set(clientesXML.map(c => c.cnpj).filter(Boolean));
+      const notas = clientesXML.reduce((t, c) => t + Number(c.notas_importadas || 0), 0);
+      const valor = produtosXML.reduce((t, p) => t + p.valor_estimado, 0);
+      const negativos = produtosXML.filter(p => p.saldo < 0).length;
+      $('#xml-detalhe-cnpj').textContent = cnpjs.size ? `${fmt(cnpjs.size)} CNPJ/CPF consolidado(s)` : '';
+      $('#xml-detalhe-valor').textContent = moeda(valor);
+      $('#xml-detalhe-resumo').textContent = `${fmt(produtosXML.length)} SKU(s) · ${fmt(notas)} nota(s) · ${fmt(negativos)} saldo(s) negativo(s)`;
       renderProdutosXML();
     }
     function renderProdutosXML() {
@@ -987,7 +1060,7 @@
       <td class="num">${fmt(p.qtd_entrada)}</td><td class="num">${fmt(p.qtd_saida)}</td>
       <td class="num" style="${p.saldo < 0 ? 'color:#b42318;font-weight:800' : ''}">${fmt(p.saldo)}</td>
       <td class="num">${moeda(p.custo_medio)}</td><td class="num">${moeda(p.valor_estimado)}</td>
-    </tr>`).join('') || '<tr><td colspan="9" class="empty">Nenhum produto encontrado para este cliente.</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="9" class="empty">Nenhum produto encontrado.</td></tr>';
       const botao = $('#xml-toggle-itens');
       const temMais = lista.length > LIMITE_PRODUTOS_XML;
       botao.style.display = temMais ? 'inline-flex' : 'none';
@@ -996,8 +1069,6 @@
     }
     $('#xml-toggle-itens').addEventListener('click', () => { mostrarTodosProdutosXML = !mostrarTodosProdutosXML; renderProdutosXML(); });
     $('#buscar-produto-xml').addEventListener('input', () => { mostrarTodosProdutosXML = false; renderProdutosXML(); });
-    $('#xml-cliente-selecionado').addEventListener('change', e => mostrarClienteXML(e.target.value));
-    $('#xml-ranking').addEventListener('click', e => { const b = e.target.closest('[data-cliente-xml]'); if (!b) return; $('#xml-cliente-selecionado').value = b.dataset.clienteXml; mostrarClienteXML(b.dataset.clienteXml); $('#painel-estoque-xml').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
     $('#form-xml').addEventListener('submit', async e => {
       e.preventDefault();
       const arquivos = $('#arquivos-xml').files;
@@ -1096,8 +1167,13 @@
     ['#xml-filtro-saldo', '#xml-ordem-produtos'].forEach(s => $(s).addEventListener('change', () => { mostrarTodosProdutosXML = false; renderProdutosXML(); }));
     // Exportações CSV.
     $('#xml-exportar-estoque').addEventListener('click', () => {
-      const cliente = $('#xml-cliente-selecionado').value;
-      window.location.href = '/api/4log/estoque-xml/exportar?' + new URLSearchParams({ conteudo: 'estoque', ...(cliente ? { cliente } : {}) });
+      const num = v => String(Number(v || 0)).replace('.', ',');
+      const txt = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      const linhas = [['Código', 'Produto', 'NCM', 'Unidade', 'Entradas', 'Saídas', 'Saldo', 'Custo médio', 'Valor estimado'].join(';')]
+        .concat(produtosXML.slice().sort((a, b) => String(a.descricao || '').localeCompare(String(b.descricao || ''), 'pt-BR'))
+          .map(p => [txt(p.codigo), txt(p.descricao), txt(p.ncm), txt(p.unidade), num(p.qtd_entrada), num(p.qtd_saida), num(p.saldo), num(p.custo_medio.toFixed(4)), num(p.valor_estimado.toFixed(2))].join(';')));
+      const blob = new Blob(['\ufeff' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'estoque_consolidado.csv'; a.click(); URL.revokeObjectURL(a.href);
     });
     $('#xml-exportar-notas').addEventListener('click', () => {
       window.location.href = '/api/4log/estoque-xml/exportar?' + filtrosNotasXML({ conteudo: 'notas', limite: '500' });

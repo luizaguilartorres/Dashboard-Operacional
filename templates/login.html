@@ -47,7 +47,7 @@
             --label-color: #035A80;
         }
 
-        body.lego{
+        body.lego {
             --btn-font-clr: #62050a;
             --bg: #c4d14dd2;
             --card-bg: #ffffff;
@@ -171,7 +171,8 @@
                 <!-- Mensagens de erro injetadas pelo Flask -->
                 {% with messages = get_flashed_messages() %}
                 {% if messages %}
-                <div class="alert alert-danger" style="color: red; margin-bottom: 15px; font-weight: bold; text-align: center; font-family: Arial, sans-serif; font-size: 14px;">
+                <div class="alert alert-danger"
+                    style="color: red; margin-bottom: 15px; font-weight: bold; text-align: center; font-family: Arial, sans-serif; font-size: 14px;">
                     {% for message in messages %}
                     {{ message }}
                     {% endfor %}
@@ -182,15 +183,17 @@
                 <form method="POST" action="/login" id="loginForm">
                     <select name="clientes" id="clientes" required>
                         {% for chave, nome in empresas.items() %}
-                        <option value="{{ chave }}" {% if cliente == chave %}selected{% endif %}>{{ nome }}</option>
+                        <option value="{{ chave }}" {% if cliente==chave %}selected{% endif %}>{{ nome }}</option>
                         {% endfor %}
                     </select>
 
                     <label for="usuario">Nome de usuario</label>
-                    <input type="text" id="usuario" name="usuario" placeholder="Digite seu usuario" autocomplete="username" required>
+                    <input type="text" id="usuario" name="usuario" placeholder="Digite seu usuario"
+                        autocomplete="username" required>
 
                     <label for="senha">Senha</label>
-                    <input type="password" id="senha" name="senha" placeholder="Digite sua senha" autocomplete="current-password" required>
+                    <input type="password" id="senha" name="senha" placeholder="Digite sua senha"
+                        autocomplete="current-password" required>
 
                     <button type="submit" id="btn-login">Entrar</button>
                 </form>
@@ -209,7 +212,7 @@
                 'sebastian': '/static/img/sebastian.png',
                 'flora': '/static/img/flora.png',
                 'default': '/static/img/4log.png',
-                'lego':'/static/img/lego_education_logo.png'
+                'lego': '/static/img/lego_education_logo.png'
             };
 
             // Aplica logo e cores do cliente que está selecionado no momento

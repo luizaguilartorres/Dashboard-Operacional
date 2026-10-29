@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -351,563 +351,559 @@
 </head>
 
 <body>
-<header>
-    <div class="bar">
-        <div class="brand">
-            <img
-                src="{{ url_for('static', filename='img/flora.png') }}"
-                alt="Logo Flora"
-                class="logo"
-                onerror="this.style.display='none'"
-            >
-            <div>
-                Painel <span>Operacional</span><br>
-                Flora
+    <header>
+        <div class="bar">
+            <div class="brand">
+                <img src="{{ url_for('static', filename='img/flora.png') }}" alt="Logo Flora" class="logo"
+                    onerror="this.style.display='none'">
+                <div>
+                    Painel <span>Operacional</span><br>
+                    Flora
+                </div>
+            </div>
+
+            <div class="spacer"></div>
+
+            <div class="filters">
+                <select id="ano" aria-label="Filtrar ano">
+                    <option value="">Todos os anos</option>
+                </select>
+
+                <select id="mes" aria-label="Filtrar mês">
+                    <option value="">Todos os meses</option>
+                    <option value="01">Janeiro</option>
+                    <option value="02">Fevereiro</option>
+                    <option value="03">Março</option>
+                    <option value="04">Abril</option>
+                    <option value="05">Maio</option>
+                    <option value="06">Junho</option>
+                    <option value="07">Julho</option>
+                    <option value="08">Agosto</option>
+                    <option value="09">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                </select>
+
+                <button class="btn secondary" id="limpar" type="button">
+                    Limpar
+                </button>
+
+                <button class="btn" id="atualizar" type="button">
+                    ↻ Atualizar
+                </button>
+
+                <a class="btn" href="{{ url_for('lancamentos_empresa', empresa_nome='flora') }}">
+                    + Lançamentos
+                </a>
+
+                <button class="btn" id="excel" type="button">
+                    ⬇ Excel
+                </button>
+
+                <div class="status">
+                    <span class="dot" id="dot"></span>
+                    <span id="upd">Carregando...</span>
+                </div>
+            </div>
+
+            <div class="user-info">
+                <span>Olá, <strong>{{ usuario_logado }}</strong></span>
+                <a class="btn-logout" href="{{ url_for('logout') }}">Sair</a>
             </div>
         </div>
+    </header>
 
-        <div class="spacer"></div>
+    <main>
+        <div class="error" id="error"></div>
 
-        <div class="filters">
-            <select id="ano" aria-label="Filtrar ano">
-                <option value="">Todos os anos</option>
-            </select>
-
-            <select id="mes" aria-label="Filtrar mês">
-                <option value="">Todos os meses</option>
-                <option value="01">Janeiro</option>
-                <option value="02">Fevereiro</option>
-                <option value="03">Março</option>
-                <option value="04">Abril</option>
-                <option value="05">Maio</option>
-                <option value="06">Junho</option>
-                <option value="07">Julho</option>
-                <option value="08">Agosto</option>
-                <option value="09">Setembro</option>
-                <option value="10">Outubro</option>
-                <option value="11">Novembro</option>
-                <option value="12">Dezembro</option>
-            </select>
-
-            <button class="btn secondary" id="limpar" type="button">
-                Limpar
+        <div class="tabs">
+            <button class="tab active" data-tab="recebimento">
+                Recebimento
             </button>
 
-            <button class="btn" id="atualizar" type="button">
-                ↻ Atualizar
+            <button class="tab" data-tab="expedicao">
+                Expedição
             </button>
 
-            <a class="btn" href="{{ url_for('lancamentos_empresa', empresa_nome='flora') }}">
-                + Lançamentos
-            </a>
-
-            <button class="btn" id="excel" type="button">
-                ⬇ Excel
+            <button class="tab" data-tab="estoque">
+                Estoque
             </button>
-
-            <div class="status">
-                <span class="dot" id="dot"></span>
-                <span id="upd">Carregando...</span>
-            </div>
         </div>
 
-        <div class="user-info">
-            <span>Olá, <strong>{{ usuario_logado }}</strong></span>
-            <a class="btn-logout" href="{{ url_for('logout') }}">Sair</a>
-        </div>
-    </div>
-</header>
+        <!-- RECEBIMENTO -->
+        <section id="recebimento" class="panel">
+            <div class="cards">
+                <div class="card">
+                    <small>Cargas recebidas</small>
+                    <b id="rec-cargas">—</b>
+                </div>
 
-<main>
-    <div class="error" id="error"></div>
+                <div class="card">
+                    <small>Pallets recebidos</small>
+                    <b id="rec-pallets">—</b>
+                </div>
 
-    <div class="tabs">
-        <button class="tab active" data-tab="recebimento">
-            Recebimento
-        </button>
+                <div class="card">
+                    <small>Notas fiscais</small>
+                    <b id="rec-notas">—</b>
+                </div>
 
-        <button class="tab" data-tab="expedicao">
-            Expedição
-        </button>
+                <div class="card">
+                    <small>Clientes</small>
+                    <b id="rec-clientes">—</b>
+                </div>
 
-        <button class="tab" data-tab="estoque">
-            Estoque
-        </button>
-    </div>
+                <div class="card">
+                    <small>Destinos</small>
+                    <b id="rec-destinos">—</b>
+                </div>
 
-    <!-- RECEBIMENTO -->
-    <section id="recebimento" class="panel">
-        <div class="cards">
-            <div class="card">
-                <small>Cargas recebidas</small>
-                <b id="rec-cargas">—</b>
+                <div class="card">
+                    <small>Média pallets/carga</small>
+                    <b id="rec-media">—</b>
+                </div>
             </div>
 
-            <div class="card">
-                <small>Pallets recebidos</small>
-                <b id="rec-pallets">—</b>
-            </div>
-
-            <div class="card">
-                <small>Notas fiscais</small>
-                <b id="rec-notas">—</b>
-            </div>
-
-            <div class="card">
-                <small>Clientes</small>
-                <b id="rec-clientes">—</b>
-            </div>
-
-            <div class="card">
-                <small>Destinos</small>
-                <b id="rec-destinos">—</b>
-            </div>
-
-            <div class="card">
-                <small>Média pallets/carga</small>
-                <b id="rec-media">—</b>
-            </div>
-        </div>
-
-        <div class="grid">
-            <div class="box wide">
-                <h3>Pallets por dia</h3>
-                <div class="chart-scroll">
-                    <div class="chart-inner" id="rec-dia-inner">
-                        <canvas id="rec-dia"></canvas>
+            <div class="grid">
+                <div class="box wide">
+                    <h3>Pallets por dia</h3>
+                    <div class="chart-scroll">
+                        <div class="chart-inner" id="rec-dia-inner">
+                            <canvas id="rec-dia"></canvas>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="box">
-                <h3>Pallets por dia da semana</h3>
-                <div class="chart">
-                    <canvas id="rec-semana"></canvas>
-                </div>
-            </div>
-
-            <div class="box">
-                <h3>Top clientes por pallets</h3>
-                <div class="chart">
-                    <canvas id="rec-cliente"></canvas>
-                </div>
-            </div>
-
-            <div class="box">
-                <h3>Pallets por destino</h3>
-                <div class="chart">
-                    <canvas id="rec-destino"></canvas>
-                </div>
-            </div>
-
-            <div class="box wide">
-                <h3>Detalhes de recebimento</h3>
-                <div id="rec-lista"></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- EXPEDIÇÃO -->
-    <section id="expedicao" class="panel" hidden>
-        <div class="cards">
-            <div class="card">
-                <small>Cargas expedidas</small>
-                <b id="exp-cargas">—</b>
-            </div>
-
-            <div class="card">
-                <small>Pallets expedidos</small>
-                <b id="exp-pallets">—</b>
-            </div>
-
-            <div class="card">
-                <small>Notas fiscais</small>
-                <b id="exp-notas">—</b>
-            </div>
-
-            <div class="card">
-                <small>Clientes</small>
-                <b id="exp-clientes">—</b>
-            </div>
-
-            <div class="card">
-                <small>Permanência média</small>
-                <b id="exp-media">—</b>
-                <span class="sub">dias armazenados</span>
-            </div>
-
-            <div class="card">
-                <small>Permanência máxima</small>
-                <b id="exp-max">—</b>
-                <span class="sub">dias armazenados</span>
-            </div>
-        </div>
-
-        <div class="grid">
-            <div class="box wide">
-                <h3>Pallets expedidos por dia</h3>
-                <div class="chart-scroll">
-                    <div class="chart-inner" id="exp-dia-inner">
-                        <canvas id="exp-dia"></canvas>
+                <div class="box">
+                    <h3>Pallets por dia da semana</h3>
+                    <div class="chart">
+                        <canvas id="rec-semana"></canvas>
                     </div>
                 </div>
-            </div>
 
-            <div class="box">
-                <h3>Expedição por cliente</h3>
-                <div class="chart">
-                    <canvas id="exp-cliente"></canvas>
+                <div class="box">
+                    <h3>Top clientes por pallets</h3>
+                    <div class="chart">
+                        <canvas id="rec-cliente"></canvas>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <h3>Pallets por destino</h3>
+                    <div class="chart">
+                        <canvas id="rec-destino"></canvas>
+                    </div>
+                </div>
+
+                <div class="box wide">
+                    <h3>Detalhes de recebimento</h3>
+                    <div id="rec-lista"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- EXPEDIÇÃO -->
+        <section id="expedicao" class="panel" hidden>
+            <div class="cards">
+                <div class="card">
+                    <small>Cargas expedidas</small>
+                    <b id="exp-cargas">—</b>
+                </div>
+
+                <div class="card">
+                    <small>Pallets expedidos</small>
+                    <b id="exp-pallets">—</b>
+                </div>
+
+                <div class="card">
+                    <small>Notas fiscais</small>
+                    <b id="exp-notas">—</b>
+                </div>
+
+                <div class="card">
+                    <small>Clientes</small>
+                    <b id="exp-clientes">—</b>
+                </div>
+
+                <div class="card">
+                    <small>Permanência média</small>
+                    <b id="exp-media">—</b>
+                    <span class="sub">dias armazenados</span>
+                </div>
+
+                <div class="card">
+                    <small>Permanência máxima</small>
+                    <b id="exp-max">—</b>
+                    <span class="sub">dias armazenados</span>
                 </div>
             </div>
 
-            <div class="box">
-                <h3>Expedição por destino</h3>
-                <div class="chart">
-                    <canvas id="exp-destino"></canvas>
+            <div class="grid">
+                <div class="box wide">
+                    <h3>Pallets expedidos por dia</h3>
+                    <div class="chart-scroll">
+                        <div class="chart-inner" id="exp-dia-inner">
+                            <canvas id="exp-dia"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <h3>Expedição por cliente</h3>
+                    <div class="chart">
+                        <canvas id="exp-cliente"></canvas>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <h3>Expedição por destino</h3>
+                    <div class="chart">
+                        <canvas id="exp-destino"></canvas>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <h3>Faixas de permanência</h3>
+                    <div class="chart">
+                        <canvas id="exp-faixas"></canvas>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <h3>Permanência média por cliente</h3>
+                    <div id="exp-permanencia"></div>
+                </div>
+
+                <div class="box wide">
+                    <h3>Detalhes de expedição</h3>
+                    <div id="exp-lista"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ESTOQUE -->
+        <section id="estoque" class="panel" hidden>
+            <div class="cards">
+                <div class="card">
+                    <small>Pallets em estoque</small>
+                    <b id="est-saldo">—</b>
+                </div>
+
+                <div class="card">
+                    <small>Total recebido</small>
+                    <b id="est-recebido">—</b>
+                </div>
+
+                <div class="card">
+                    <small>Total expedido</small>
+                    <b id="est-expedido">—</b>
+                </div>
+
+                <div class="card">
+                    <small>Cargas pendentes</small>
+                    <b id="est-cargas">—</b>
                 </div>
             </div>
 
-            <div class="box">
-                <h3>Faixas de permanência</h3>
-                <div class="chart">
-                    <canvas id="exp-faixas"></canvas>
+            <div class="grid">
+                <div class="box">
+                    <h3>Saldo por cliente</h3>
+                    <div class="chart">
+                        <canvas id="est-cliente"></canvas>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <h3>Cargas pendentes mais antigas</h3>
+                    <div id="est-pendentes"></div>
+                </div>
+
+                <div class="box wide">
+                    <h3>Posição de estoque por cliente</h3>
+                    <div id="est-lista"></div>
                 </div>
             </div>
+        </section>
+    </main>
 
-            <div class="box">
-                <h3>Permanência média por cliente</h3>
-                <div id="exp-permanencia"></div>
-            </div>
+    <script>
+        const $ = s => document.querySelector(s);
+        const $$ = s => [...document.querySelectorAll(s)];
 
-            <div class="box wide">
-                <h3>Detalhes de expedição</h3>
-                <div id="exp-lista"></div>
-            </div>
-        </div>
-    </section>
+        const nf = n =>
+            Number(n || 0).toLocaleString("pt-BR");
 
-    <!-- ESTOQUE -->
-    <section id="estoque" class="panel" hidden>
-        <div class="cards">
-            <div class="card">
-                <small>Pallets em estoque</small>
-                <b id="est-saldo">—</b>
-            </div>
+        const nf1 = n =>
+            Number(n || 0).toLocaleString("pt-BR", {
+                maximumFractionDigits: 1
+            });
 
-            <div class="card">
-                <small>Total recebido</small>
-                <b id="est-recebido">—</b>
-            </div>
+        const esc = v =>
+            String(v ?? "—").replace(/[&<>"']/g, c => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            }[c]));
 
-            <div class="card">
-                <small>Total expedido</small>
-                <b id="est-expedido">—</b>
-            </div>
+        const state = {
+            ano: "",
+            mes: "",
+            tab: "recebimento"
+        };
 
-            <div class="card">
-                <small>Cargas pendentes</small>
-                <b id="est-cargas">—</b>
-            </div>
-        </div>
+        const charts = {};
 
-        <div class="grid">
-            <div class="box">
-                <h3>Saldo por cliente</h3>
-                <div class="chart">
-                    <canvas id="est-cliente"></canvas>
-                </div>
-            </div>
+        const fmtDate = d => {
+            if (!d) return "—";
 
-            <div class="box">
-                <h3>Cargas pendentes mais antigas</h3>
-                <div id="est-pendentes"></div>
-            </div>
+            const s = String(d).slice(0, 10);
+            const p = s.split("-");
 
-            <div class="box wide">
-                <h3>Posição de estoque por cliente</h3>
-                <div id="est-lista"></div>
-            </div>
-        </div>
-    </section>
-</main>
+            return p.length === 3
+                ? `${p[2]}/${p[1]}/${p[0]}`
+                : s;
+        };
 
-<script>
-    const $ = s => document.querySelector(s);
-    const $$ = s => [...document.querySelectorAll(s)];
+        async function api(path, filters = true) {
+            const q = new URLSearchParams();
 
-    const nf = n =>
-        Number(n || 0).toLocaleString("pt-BR");
+            if (filters && state.ano) q.set("ano", state.ano);
+            if (filters && state.mes) q.set("mes", state.mes);
 
-    const nf1 = n =>
-        Number(n || 0).toLocaleString("pt-BR", {
-            maximumFractionDigits: 1
-        });
+            const resposta = await fetch(
+                path + (q.size ? "?" + q : ""),
+                { credentials: "same-origin" }
+            );
 
-    const esc = v =>
-        String(v ?? "—").replace(/[&<>"']/g, c => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#39;"
-        }[c]));
+            if (resposta.status === 401 || resposta.status === 403) {
+                location.href = "/login";
+                throw new Error("Sessão expirada ou acesso não autorizado.");
+            }
 
-    const state = {
-        ano: "",
-        mes: "",
-        tab: "recebimento"
-    };
+            if (!resposta.ok) {
+                throw new Error(`${path}: HTTP ${resposta.status}`);
+            }
 
-    const charts = {};
-
-    const fmtDate = d => {
-        if (!d) return "—";
-
-        const s = String(d).slice(0, 10);
-        const p = s.split("-");
-
-        return p.length === 3
-            ? `${p[2]}/${p[1]}/${p[0]}`
-            : s;
-    };
-
-    async function api(path, filters = true) {
-        const q = new URLSearchParams();
-
-        if (filters && state.ano) q.set("ano", state.ano);
-        if (filters && state.mes) q.set("mes", state.mes);
-
-        const resposta = await fetch(
-            path + (q.size ? "?" + q : ""),
-            { credentials: "same-origin" }
-        );
-
-        if (resposta.status === 401 || resposta.status === 403) {
-            location.href = "/login";
-            throw new Error("Sessão expirada ou acesso não autorizado.");
+            return resposta.json();
         }
 
-        if (!resposta.ok) {
-            throw new Error(`${path}: HTTP ${resposta.status}`);
+        async function get(path, filters = true) {
+            return api("/api/flora/" + path, filters);
         }
 
-        return resposta.json();
-    }
+        function val(id, v) {
+            const elemento = document.getElementById(id);
 
-    async function get(path, filters = true) {
-        return api("/api/flora/" + path, filters);
-    }
-
-    function val(id, v) {
-        const elemento = document.getElementById(id);
-
-        if (elemento) {
-            elemento.textContent = v;
-        }
-    }
-
-    function draw(id, type, labels, datasets, horizontal = false) {
-        if (charts[id]) {
-            charts[id].destroy();
+            if (elemento) {
+                elemento.textContent = v;
+            }
         }
 
-        const canvas = document.getElementById(id);
+        function draw(id, type, labels, datasets, horizontal = false) {
+            if (charts[id]) {
+                charts[id].destroy();
+            }
 
-        if (!canvas) return;
+            const canvas = document.getElementById(id);
 
-        charts[id] = new Chart(canvas, {
-            type,
+            if (!canvas) return;
 
-            data: {
-                labels,
+            charts[id] = new Chart(canvas, {
+                type,
 
-                datasets: datasets.map(d => ({
-                    ...d,
-                    backgroundColor: d.backgroundColor || "#ffffff",
-                    borderColor: d.borderColor || "#ffffff",
-                    borderRadius: type === "bar" ? 4 : 0,
-                    tension: 0.25
-                }))
-            },
+                data: {
+                    labels,
 
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                    datasets: datasets.map(d => ({
+                        ...d,
+                        backgroundColor: d.backgroundColor || "#ffffff",
+                        borderColor: d.borderColor || "#ffffff",
+                        borderRadius: type === "bar" ? 4 : 0,
+                        tension: 0.25
+                    }))
+                },
 
-                plugins: {
-                    legend: {
-                        display: datasets.length > 1,
-                        labels: {
-                            color: "#fff"
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    plugins: {
+                        legend: {
+                            display: datasets.length > 1,
+                            labels: {
+                                color: "#fff"
+                            }
+                        }
+                    },
+
+                    indexAxis: horizontal ? "y" : "x",
+
+                    scales: type === "doughnut" ? {} : {
+                        x: {
+                            ticks: { color: "#fff" },
+                            grid: { display: false }
+                        },
+
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: "#fff" },
+                            grid: { color: "#ffffff20" }
                         }
                     }
-                },
-
-                indexAxis: horizontal ? "y" : "x",
-
-                scales: type === "doughnut" ? {} : {
-                    x: {
-                        ticks: { color: "#fff" },
-                        grid: { display: false }
-                    },
-
-                    y: {
-                        beginAtZero: true,
-                        ticks: { color: "#fff" },
-                        grid: { color: "#ffffff20" }
-                    }
                 }
-            }
-        });
-    }
-
-    /*
-     * Novo gráfico diário:
-     * - linha em vez de barras;
-     * - datas resumidas no eixo X;
-     * - largura proporcional à quantidade de dias;
-     * - rolagem horizontal quando há muitos registros;
-     * - tooltip com data completa e total de pallets.
-     */
-    function drawDaily(id, rows) {
-        const canvas = document.getElementById(id);
-        const inner = document.getElementById(id + "-inner");
-
-        if (!canvas || !inner) return;
-
-        if (charts[id]) {
-            charts[id].destroy();
+            });
         }
 
-        const dados = [...(rows || [])].sort((a, b) =>
-            String(a.data || "").localeCompare(String(b.data || ""))
-        );
+        /*
+         * Novo gráfico diário:
+         * - linha em vez de barras;
+         * - datas resumidas no eixo X;
+         * - largura proporcional à quantidade de dias;
+         * - rolagem horizontal quando há muitos registros;
+         * - tooltip com data completa e total de pallets.
+         */
+        function drawDaily(id, rows) {
+            const canvas = document.getElementById(id);
+            const inner = document.getElementById(id + "-inner");
 
-        const datasCompletas = dados.map(item =>
-            String(item.data || "").slice(0, 10)
-        );
+            if (!canvas || !inner) return;
 
-        const labels = datasCompletas.map(data => {
-            const partes = data.split("-");
+            if (charts[id]) {
+                charts[id].destroy();
+            }
 
-            return partes.length === 3
-                ? `${partes[2]}/${partes[1]}`
-                : data;
-        });
+            const dados = [...(rows || [])].sort((a, b) =>
+                String(a.data || "").localeCompare(String(b.data || ""))
+            );
 
-        const valores = dados.map(item =>
-            Number(item.total) || 0
-        );
+            const datasCompletas = dados.map(item =>
+                String(item.data || "").slice(0, 10)
+            );
 
-        const larguraDisponivel =
-            inner.parentElement.clientWidth || 600;
+            const labels = datasCompletas.map(data => {
+                const partes = data.split("-");
 
-        const larguraMinima = Math.max(
-            larguraDisponivel,
-            labels.length * 48
-        );
+                return partes.length === 3
+                    ? `${partes[2]}/${partes[1]}`
+                    : data;
+            });
 
-        inner.style.width = `${larguraMinima}px`;
+            const valores = dados.map(item =>
+                Number(item.total) || 0
+            );
 
-        charts[id] = new Chart(canvas, {
-            type: "line",
+            const larguraDisponivel =
+                inner.parentElement.clientWidth || 600;
 
-            data: {
-                labels,
+            const larguraMinima = Math.max(
+                larguraDisponivel,
+                labels.length * 48
+            );
 
-                datasets: [{
-                    label: "Pallets",
-                    data: valores,
+            inner.style.width = `${larguraMinima}px`;
 
-                    borderColor: "#ffffff",
-                    backgroundColor: "rgba(255,255,255,0.15)",
+            charts[id] = new Chart(canvas, {
+                type: "line",
 
-                    borderWidth: 2.5,
-                    pointRadius: labels.length > 45 ? 1.5 : 3,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: "#ffffff",
-                    pointBorderColor: "#ffffff",
+                data: {
+                    labels,
 
-                    tension: 0.3,
-                    fill: true
-                }]
-            },
+                    datasets: [{
+                        label: "Pallets",
+                        data: valores,
 
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
+                        borderColor: "#ffffff",
+                        backgroundColor: "rgba(255,255,255,0.15)",
 
-                interaction: {
-                    intersect: false,
-                    mode: "index"
+                        borderWidth: 2.5,
+                        pointRadius: labels.length > 45 ? 1.5 : 3,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: "#ffffff",
+                        pointBorderColor: "#ffffff",
+
+                        tension: 0.3,
+                        fill: true
+                    }]
                 },
 
-                plugins: {
-                    legend: {
-                        display: false
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+
+                    interaction: {
+                        intersect: false,
+                        mode: "index"
                     },
 
-                    tooltip: {
-                        callbacks: {
-                            title(items) {
-                                const indice = items[0].dataIndex;
-                                return fmtDate(datasCompletas[indice]);
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+
+                        tooltip: {
+                            callbacks: {
+                                title(items) {
+                                    const indice = items[0].dataIndex;
+                                    return fmtDate(datasCompletas[indice]);
+                                },
+
+                                label(context) {
+                                    return "Pallets: " +
+                                        Number(context.raw || 0)
+                                            .toLocaleString("pt-BR");
+                                }
+                            }
+                        }
+                    },
+
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: "#ffffff",
+                                autoSkip: true,
+                                maxTicksLimit: 12,
+                                maxRotation: 0,
+                                minRotation: 0
                             },
 
-                            label(context) {
-                                return "Pallets: " +
-                                    Number(context.raw || 0)
-                                        .toLocaleString("pt-BR");
+                            grid: {
+                                display: false
+                            }
+                        },
+
+                        y: {
+                            beginAtZero: true,
+
+                            ticks: {
+                                color: "#ffffff",
+                                precision: 0
+                            },
+
+                            grid: {
+                                color: "#ffffff20"
                             }
                         }
                     }
-                },
-
-                scales: {
-                    x: {
-                        ticks: {
-                            color: "#ffffff",
-                            autoSkip: true,
-                            maxTicksLimit: 12,
-                            maxRotation: 0,
-                            minRotation: 0
-                        },
-
-                        grid: {
-                            display: false
-                        }
-                    },
-
-                    y: {
-                        beginAtZero: true,
-
-                        ticks: {
-                            color: "#ffffff",
-                            precision: 0
-                        },
-
-                        grid: {
-                            color: "#ffffff20"
-                        }
-                    }
                 }
-            }
-        });
-    }
-
-    function table(id, cols, rows) {
-        const elemento = document.getElementById(id);
-
-        if (!elemento) return;
-
-        if (!rows || !rows.length) {
-            elemento.innerHTML =
-                '<div class="empty">Nenhum registro encontrado</div>';
-            return;
+            });
         }
 
-        elemento.innerHTML = `
+        function table(id, cols, rows) {
+            const elemento = document.getElementById(id);
+
+            if (!elemento) return;
+
+            if (!rows || !rows.length) {
+                elemento.innerHTML =
+                    '<div class="empty">Nenhum registro encontrado</div>';
+                return;
+            }
+
+            elemento.innerHTML = `
             <div class="tablewrap">
                 <table>
                     <thead>
@@ -918,370 +914,370 @@
 
                     <tbody>
                         ${rows.map(r =>
-                            "<tr>" +
-                            cols.map(c => {
-                                const valor = r[c[0]];
+                "<tr>" +
+                cols.map(c => {
+                    const valor = r[c[0]];
 
-                                return `<td>${
-                                    c[2]
-                                        ? c[2](valor, r)
-                                        : esc(valor)
-                                }</td>`;
-                            }).join("") +
-                            "</tr>"
-                        ).join("")}
+                    return `<td>${c[2]
+                            ? c[2](valor, r)
+                            : esc(valor)
+                        }</td>`;
+                }).join("") +
+                "</tr>"
+            ).join("")}
                     </tbody>
                 </table>
             </div>
         `;
-    }
+        }
 
-    function topChart(id, rows, labelKey, valueKey = "total") {
-        const lista = (rows || []).slice(0, 10);
+        function topChart(id, rows, labelKey, valueKey = "total") {
+            const lista = (rows || []).slice(0, 10);
 
-        draw(
-            id,
-            "bar",
-            lista.map(r => r[labelKey] || "—"),
-            [{
-                label: "Pallets",
-                data: lista.map(r => Number(r[valueKey]) || 0)
-            }],
-            true
-        );
-    }
+            draw(
+                id,
+                "bar",
+                lista.map(r => r[labelKey] || "—"),
+                [{
+                    label: "Pallets",
+                    data: lista.map(r => Number(r[valueKey]) || 0)
+                }],
+                true
+            );
+        }
 
-    // =====================================================
-    // RECEBIMENTO
-    // =====================================================
+        // =====================================================
+        // RECEBIMENTO
+        // =====================================================
 
-    async function carregarRecebimento() {
-        const [
-            resumo,
-            porDia,
-            porSemana,
-            porCliente,
-            porDestino,
-            lista
-        ] = await Promise.all([
-            get("recebimento/resumo"),
-            get("recebimento/pallet/data"),
-            get("recebimento/pallet/dia-semana"),
-            get("recebimento/pallet/cliente"),
-            get("recebimento/pallet/destino"),
-            get("recebimento/lista")
-        ]);
+        async function carregarRecebimento() {
+            const [
+                resumo,
+                porDia,
+                porSemana,
+                porCliente,
+                porDestino,
+                lista
+            ] = await Promise.all([
+                get("recebimento/resumo"),
+                get("recebimento/pallet/data"),
+                get("recebimento/pallet/dia-semana"),
+                get("recebimento/pallet/cliente"),
+                get("recebimento/pallet/destino"),
+                get("recebimento/lista")
+            ]);
 
-        const r = resumo[0] || {};
+            const r = resumo[0] || {};
 
-        val("rec-cargas", nf(r.cargas));
-        val("rec-pallets", nf(r.pallets));
-        val("rec-notas", nf(r.notas));
-        val("rec-clientes", nf(r.clientes));
-        val("rec-destinos", nf(r.destinos));
-        val("rec-media", nf1(r.media_pallets));
+            val("rec-cargas", nf(r.cargas));
+            val("rec-pallets", nf(r.pallets));
+            val("rec-notas", nf(r.notas));
+            val("rec-clientes", nf(r.clientes));
+            val("rec-destinos", nf(r.destinos));
+            val("rec-media", nf1(r.media_pallets));
 
-        drawDaily("rec-dia", porDia);
+            drawDaily("rec-dia", porDia);
 
-        draw(
-            "rec-semana",
-            "bar",
-            porSemana.map(x => x.dia_semana),
-            [{
-                label: "Pallets",
-                data: porSemana.map(x => Number(x.total) || 0)
-            }]
-        );
+            draw(
+                "rec-semana",
+                "bar",
+                porSemana.map(x => x.dia_semana),
+                [{
+                    label: "Pallets",
+                    data: porSemana.map(x => Number(x.total) || 0)
+                }]
+            );
 
-        topChart("rec-cliente", porCliente, "cliente");
-        topChart("rec-destino", porDestino, "destino");
+            topChart("rec-cliente", porCliente, "cliente");
+            topChart("rec-destino", porDestino, "destino");
 
-        table("rec-lista", [
-            ["data", "Data", fmtDate],
-            ["cliente", "Cliente"],
-            ["nota_fiscal", "Notas fiscais"],
-            ["cte", "CT-e"],
-            ["pallets", "Pallets", nf],
-            ["destino", "Destino"],
-            ["saida", "Data saída", fmtDate],
-            ["situacao", "Situação"],
-            ["dias", "Dias armazenado", v => v == null ? "—" : nf(v)]
-        ], lista);
-    }
+            table("rec-lista", [
+                ["data", "Data", fmtDate],
+                ["cliente", "Cliente"],
+                ["nota_fiscal", "Notas fiscais"],
+                ["cte", "CT-e"],
+                ["pallets", "Pallets", nf],
+                ["destino", "Destino"],
+                ["saida", "Data saída", fmtDate],
+                ["situacao", "Situação"],
+                ["dias", "Dias armazenado", v => v == null ? "—" : nf(v)]
+            ], lista);
+        }
 
-    // =====================================================
-    // EXPEDIÇÃO
-    // =====================================================
+        // =====================================================
+        // EXPEDIÇÃO
+        // =====================================================
 
-    async function carregarExpedicao() {
-        const [
-            resumo,
-            porDia,
-            porCliente,
-            porDestino,
-            faixas,
-            permanencia,
-            lista
-        ] = await Promise.all([
-            get("expedicao/resumo"),
-            get("expedicao/pallet/data"),
-            get("expedicao/pallet/cliente"),
-            get("expedicao/pallet/destino"),
-            get("expedicao/permanencia/faixas"),
-            get("expedicao/permanencia/cliente"),
-            get("recebimento/lista")
-        ]);
+        async function carregarExpedicao() {
+            const [
+                resumo,
+                porDia,
+                porCliente,
+                porDestino,
+                faixas,
+                permanencia,
+                lista
+            ] = await Promise.all([
+                get("expedicao/resumo"),
+                get("expedicao/pallet/data"),
+                get("expedicao/pallet/cliente"),
+                get("expedicao/pallet/destino"),
+                get("expedicao/permanencia/faixas"),
+                get("expedicao/permanencia/cliente"),
+                get("recebimento/lista")
+            ]);
 
-        const r = resumo[0] || {};
+            const r = resumo[0] || {};
 
-        val("exp-cargas", nf(r.cargas));
-        val("exp-pallets", nf(r.pallets));
-        val("exp-notas", nf(r.notas));
-        val("exp-clientes", nf(r.clientes));
-        val("exp-media", nf1(r.permanencia_media));
-        val("exp-max", nf(r.permanencia_max));
+            val("exp-cargas", nf(r.cargas));
+            val("exp-pallets", nf(r.pallets));
+            val("exp-notas", nf(r.notas));
+            val("exp-clientes", nf(r.clientes));
+            val("exp-media", nf1(r.permanencia_media));
+            val("exp-max", nf(r.permanencia_max));
 
-        drawDaily("exp-dia", porDia);
+            drawDaily("exp-dia", porDia);
 
-        topChart("exp-cliente", porCliente, "cliente");
-        topChart("exp-destino", porDestino, "destino");
+            topChart("exp-cliente", porCliente, "cliente");
+            topChart("exp-destino", porDestino, "destino");
 
-        draw(
-            "exp-faixas",
-            "bar",
-            faixas.map(x => x.faixa),
-            [{
-                label: "Cargas",
-                data: faixas.map(x => Number(x.total) || 0)
-            }]
-        );
+            draw(
+                "exp-faixas",
+                "bar",
+                faixas.map(x => x.faixa),
+                [{
+                    label: "Cargas",
+                    data: faixas.map(x => Number(x.total) || 0)
+                }]
+            );
 
-        table("exp-permanencia", [
-            ["cliente", "Cliente"],
-            ["cargas", "Cargas", nf],
-            ["dias_medios", "Média (dias)", nf1]
-        ], permanencia);
+            table("exp-permanencia", [
+                ["cliente", "Cliente"],
+                ["cargas", "Cargas", nf],
+                ["dias_medios", "Média (dias)", nf1]
+            ], permanencia);
 
-        table("exp-lista", [
-            ["data", "Data recebimento", fmtDate],
-            ["cliente", "Cliente"],
-            ["nota_fiscal", "Notas fiscais"],
-            ["pallets", "Pallets", nf],
-            ["destino", "Destino"],
-            ["saida", "Data saída", fmtDate],
-            ["dias", "Dias armazenado", v => v == null ? "—" : nf(v)]
-        ], lista.filter(x => x.situacao === "Expedido"));
-    }
+            table("exp-lista", [
+                ["data", "Data recebimento", fmtDate],
+                ["cliente", "Cliente"],
+                ["nota_fiscal", "Notas fiscais"],
+                ["pallets", "Pallets", nf],
+                ["destino", "Destino"],
+                ["saida", "Data saída", fmtDate],
+                ["dias", "Dias armazenado", v => v == null ? "—" : nf(v)]
+            ], lista.filter(x => x.situacao === "Expedido"));
+        }
 
-    // =====================================================
-    // ESTOQUE
-    // =====================================================
+        // =====================================================
+        // ESTOQUE
+        // =====================================================
 
-    async function carregarEstoque() {
-        const [clientes, pendentes] = await Promise.all([
-            get("estoque/por-cliente", false),
-            get("estoque/pendentes", false)
-        ]);
+        async function carregarEstoque() {
+            const [clientes, pendentes] = await Promise.all([
+                get("estoque/por-cliente", false),
+                get("estoque/pendentes", false)
+            ]);
 
-        const recebido = clientes.reduce(
-            (total, r) => total + (Number(r.recebido) || 0), 0
-        );
+            const recebido = clientes.reduce(
+                (total, r) => total + (Number(r.recebido) || 0), 0
+            );
 
-        const expedido = clientes.reduce(
-            (total, r) => total + (Number(r.expedido) || 0), 0
-        );
+            const expedido = clientes.reduce(
+                (total, r) => total + (Number(r.expedido) || 0), 0
+            );
 
-        const saldo = clientes.reduce(
-            (total, r) => total + (Number(r.saldo) || 0), 0
-        );
+            const saldo = clientes.reduce(
+                (total, r) => total + (Number(r.saldo) || 0), 0
+            );
 
-        val("est-saldo", nf(saldo));
-        val("est-recebido", nf(recebido));
-        val("est-expedido", nf(expedido));
-        val("est-cargas", nf(pendentes.length));
+            val("est-saldo", nf(saldo));
+            val("est-recebido", nf(recebido));
+            val("est-expedido", nf(expedido));
+            val("est-cargas", nf(pendentes.length));
 
-        draw(
-            "est-cliente",
-            "bar",
-            clientes.slice(0, 12).map(r => r.cliente || "—"),
-            [{
-                label: "Saldo pallets",
-                data: clientes.slice(0, 12).map(r => Number(r.saldo) || 0)
-            }],
-            true
-        );
+            draw(
+                "est-cliente",
+                "bar",
+                clientes.slice(0, 12).map(r => r.cliente || "—"),
+                [{
+                    label: "Saldo pallets",
+                    data: clientes.slice(0, 12).map(r => Number(r.saldo) || 0)
+                }],
+                true
+            );
 
-        table("est-pendentes", [
-            ["data", "Recebido em", fmtDate],
-            ["cliente", "Cliente"],
-            ["destino", "Destino"],
-            ["pallets", "Pallets", nf],
-            ["dias", "Dias no estoque", nf]
-        ], pendentes.slice(0, 100));
+            table("est-pendentes", [
+                ["data", "Recebido em", fmtDate],
+                ["cliente", "Cliente"],
+                ["destino", "Destino"],
+                ["pallets", "Pallets", nf],
+                ["dias", "Dias no estoque", nf]
+            ], pendentes.slice(0, 100));
 
-        table("est-lista", [
-            ["cliente", "Cliente"],
-            ["recebido", "Recebido", nf],
-            ["expedido", "Expedido", nf],
-            ["saldo", "Saldo", nf],
-            ["cargas_pendentes", "Cargas pendentes", nf]
-        ], clientes);
-    }
+            table("est-lista", [
+                ["cliente", "Cliente"],
+                ["recebido", "Recebido", nf],
+                ["expedido", "Expedido", nf],
+                ["saldo", "Saldo", nf],
+                ["cargas_pendentes", "Cargas pendentes", nf]
+            ], clientes);
+        }
 
-    // =====================================================
-    // ATUALIZAÇÃO E FILTROS
-    // =====================================================
+        // =====================================================
+        // ATUALIZAÇÃO E FILTROS
+        // =====================================================
 
-    async function carregar() {
-        const erro = $("#error");
+        async function carregar() {
+            const erro = $("#error");
 
-        erro.style.display = "none";
-        erro.textContent = "";
+            erro.style.display = "none";
+            erro.textContent = "";
 
-        $("#upd").textContent = "Atualizando...";
+            $("#upd").textContent = "Atualizando...";
 
-        try {
-            if (state.tab === "recebimento") {
-                await carregarRecebimento();
+            try {
+                if (state.tab === "recebimento") {
+                    await carregarRecebimento();
+                }
+
+                if (state.tab === "expedicao") {
+                    await carregarExpedicao();
+                }
+
+                if (state.tab === "estoque") {
+                    await carregarEstoque();
+                }
+
+                $("#upd").textContent =
+                    "Atualizado " +
+                    new Date().toLocaleTimeString("pt-BR", {
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    });
+
+                $("#dot").style.background = "#48a879";
+            } catch (e) {
+                erro.style.display = "block";
+                erro.textContent = e.message;
+
+                $("#upd").textContent = "Falha ao atualizar";
+                $("#dot").style.background = "#d9534f";
             }
+        }
 
-            if (state.tab === "expedicao") {
-                await carregarExpedicao();
-            }
+        $$(".tab").forEach(botao => {
+            botao.addEventListener("click", () => {
+                state.tab = botao.dataset.tab;
 
-            if (state.tab === "estoque") {
-                await carregarEstoque();
-            }
-
-            $("#upd").textContent =
-                "Atualizado " +
-                new Date().toLocaleTimeString("pt-BR", {
-                    hour: "2-digit",
-                    minute: "2-digit"
+                $$(".tab").forEach(item => {
+                    item.classList.toggle("active", item === botao);
                 });
 
-            $("#dot").style.background = "#48a879";
-        } catch (e) {
-            erro.style.display = "block";
-            erro.textContent = e.message;
+                $$(".panel").forEach(painel => {
+                    painel.hidden = painel.id !== state.tab;
+                });
 
-            $("#upd").textContent = "Falha ao atualizar";
-            $("#dot").style.background = "#d9534f";
-        }
-    }
-
-    $$(".tab").forEach(botao => {
-        botao.addEventListener("click", () => {
-            state.tab = botao.dataset.tab;
-
-            $$(".tab").forEach(item => {
-                item.classList.toggle("active", item === botao);
+                carregar();
             });
+        });
 
-            $$(".panel").forEach(painel => {
-                painel.hidden = painel.id !== state.tab;
-            });
+        $("#ano").addEventListener("change", evento => {
+            state.ano = evento.target.value;
+            carregar();
+        });
+
+        $("#mes").addEventListener("change", evento => {
+            state.mes = evento.target.value;
+            carregar();
+        });
+
+        $("#limpar").addEventListener("click", () => {
+            state.ano = "";
+            state.mes = "";
+
+            $("#ano").value = "";
+            $("#mes").value = "";
 
             carregar();
         });
-    });
 
-    $("#ano").addEventListener("change", evento => {
-        state.ano = evento.target.value;
-        carregar();
-    });
+        $("#atualizar").addEventListener("click", carregar);
 
-    $("#mes").addEventListener("change", evento => {
-        state.mes = evento.target.value;
-        carregar();
-    });
+        $("#excel").addEventListener("click", () => {
+            const q = new URLSearchParams();
 
-    $("#limpar").addEventListener("click", () => {
-        state.ano = "";
-        state.mes = "";
+            if (state.ano) q.set("ano", state.ano);
+            if (state.mes) q.set("mes", state.mes);
 
-        $("#ano").value = "";
-        $("#mes").value = "";
+            location.href =
+                "/api/flora/exportar" +
+                (q.size ? "?" + q.toString() : "");
+        });
 
-        carregar();
-    });
+        // Carrega os anos disponíveis.
+        async function carregarAnos() {
+            try {
+                const [recebimentos, expedicoes] = await Promise.all([
+                    get("recebimento/por-mes", false),
+                    get("expedicao/por-mes", false)
+                ]);
 
-    $("#atualizar").addEventListener("click", carregar);
+                const anos = [
+                    ...new Set(
+                        [...recebimentos, ...expedicoes]
+                            .map(item => String(item.mes || "").slice(0, 4))
+                            .filter(ano => /^\d{4}$/.test(ano))
+                    )
+                ].sort();
 
-    $("#excel").addEventListener("click", () => {
-        const q = new URLSearchParams();
-
-        if (state.ano) q.set("ano", state.ano);
-        if (state.mes) q.set("mes", state.mes);
-
-        location.href =
-            "/api/flora/exportar" +
-            (q.size ? "?" + q.toString() : "");
-    });
-
-    // Carrega os anos disponíveis.
-    async function carregarAnos() {
-        try {
-            const [recebimentos, expedicoes] = await Promise.all([
-                get("recebimento/por-mes", false),
-                get("expedicao/por-mes", false)
-            ]);
-
-            const anos = [
-                ...new Set(
-                    [...recebimentos, ...expedicoes]
-                        .map(item => String(item.mes || "").slice(0, 4))
-                        .filter(ano => /^\d{4}$/.test(ano))
-                )
-            ].sort();
-
-            $("#ano").innerHTML =
-                '<option value="">Todos os anos</option>' +
-                anos.map(ano =>
-                    `<option value="${esc(ano)}">${esc(ano)}</option>`
-                ).join("");
-        } catch (erro) {
-            console.warn("Não foi possível carregar os anos:", erro);
+                $("#ano").innerHTML =
+                    '<option value="">Todos os anos</option>' +
+                    anos.map(ano =>
+                        `<option value="${esc(ano)}">${esc(ano)}</option>`
+                    ).join("");
+            } catch (erro) {
+                console.warn("Não foi possível carregar os anos:", erro);
+            }
         }
-    }
 
-    // Recalcula a largura dos gráficos após alteração de tamanho.
-    let resizeTimer;
+        // Recalcula a largura dos gráficos após alteração de tamanho.
+        let resizeTimer;
 
-    window.addEventListener("resize", () => {
-        clearTimeout(resizeTimer);
+        window.addEventListener("resize", () => {
+            clearTimeout(resizeTimer);
 
-        resizeTimer = setTimeout(() => {
-            if (state.tab === "recebimento") {
-                drawDailyFromExisting("rec-dia", "rec-dia-inner");
-            }
+            resizeTimer = setTimeout(() => {
+                if (state.tab === "recebimento") {
+                    drawDailyFromExisting("rec-dia", "rec-dia-inner");
+                }
 
-            if (state.tab === "expedicao") {
-                drawDailyFromExisting("exp-dia", "exp-dia-inner");
-            }
-        }, 200);
-    });
+                if (state.tab === "expedicao") {
+                    drawDailyFromExisting("exp-dia", "exp-dia-inner");
+                }
+            }, 200);
+        });
 
-    function drawDailyFromExisting(id, innerId) {
-        const chart = charts[id];
-        const inner = document.getElementById(innerId);
+        function drawDailyFromExisting(id, innerId) {
+            const chart = charts[id];
+            const inner = document.getElementById(innerId);
 
-        if (!chart || !inner) return;
+            if (!chart || !inner) return;
 
-        const quantidade = chart.data.labels.length;
-        const largura = Math.max(
-            inner.parentElement.clientWidth || 600,
-            quantidade * 48
-        );
+            const quantidade = chart.data.labels.length;
+            const largura = Math.max(
+                inner.parentElement.clientWidth || 600,
+                quantidade * 48
+            );
 
-        inner.style.width = `${largura}px`;
-        chart.resize();
-    }
+            inner.style.width = `${largura}px`;
+            chart.resize();
+        }
 
-    (async function iniciar() {
-        await carregarAnos();
-        await carregar();
-    })();
-</script>
+        (async function iniciar() {
+            await carregarAnos();
+            await carregar();
+        })();
+    </script>
 </body>
+
 </html>
