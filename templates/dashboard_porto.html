@@ -665,6 +665,7 @@
                 <div class="card"><small>Pedidos</small><b id="exp-pedidos">-</b></div>
                 <div class="card"><small>Top 1 cliente</small><b class="txt" id="exp-cliente-pallet">-</b></div>
                 <div class="card"><small>Top 1 destino</small><b class="txt" id="exp-destino-pallet">-</b></div>
+                <div class="card"><small>Top 1 transportadora</small><b class="txt" id="exp-transp-pallet">-</b></div>
             </div>
             <div class="grid">
                 <div class="box largo">
@@ -692,6 +693,14 @@
                 <div class="box">
                     <h3>Destinos <span class="sub">pallets</span></h3>
                     <div class="alt"><canvas id="exp-destinos"></canvas></div>
+                </div>
+                <div class="box">
+                    <h3>Transportadoras <span class="sub">pallets</span></h3>
+                    <div class="alt"><canvas id="exp-transp-pallets"></canvas></div>
+                </div>
+                <div class="box">
+                    <h3>Transportadoras <span class="sub">carros</span></h3>
+                    <div class="alt"><canvas id="exp-transp-carros"></canvas></div>
                 </div>
                 <div class="box largo">
                     <h3>Detalhe por cliente</h3>
@@ -1133,11 +1142,12 @@
         /* ====================== EXPEDIÇÃO ====================== */
         async function carregarExpedicao() {
             const B = '/api/porto/expedicao';
-            const [res, sem, cliP, cliCx, cliPed, cliCar, destP, vei, dP, dC, dCx] = await Promise.all([
+            const [res, sem, cliP, cliCx, cliPed, cliCar, destP, vei, dP, dC, dCx, trP, trC] = await Promise.all([
                 safe(`${B}/resumo`, []), safe(`${B}/pallet/dia-semana`, []), safe(`${B}/pallet/por-cliente`, []),
                 safe(`${B}/caixa/por-cliente`, []), safe(`${B}/pedido/cliente`, []), safe(`${B}/carro/por-cliente`, []),
                 safe(`${B}/pallet/por-destino`, []), safe(`${B}/carro/veiculo`, []),
-                safe(`${B}/pallet/data`, [], TODOS), safe(`${B}/carro/data`, [], TODOS), safe(`${B}/caixa/data`, [], TODOS)
+                safe(`${B}/pallet/data`, [], TODOS), safe(`${B}/carro/data`, [], TODOS), safe(`${B}/caixa/data`, [], TODOS),
+                safe(`${B}/pallet/por-transportadora`, []), safe(`${B}/carro/por-transportadora`, [])
             ]);
             const r = res[0] || {};
             set('exp-carros', nf(r.carros));
@@ -1145,6 +1155,7 @@
             set('exp-pedidos', nf(r.pedidos));
             topo('exp-cliente-pallet', cliP, 'total', 'pallets');
             topo('exp-destino-pallet', destP, 'total', 'pallets', 'destino');
+            topo('exp-transp-pallet', trP, 'total', 'pallets', 'transportadora');
 
             const mP = mapa(dP), mC = mapa(dC), mCx = mapa(dCx);
             montarQuinzena('exp', {
@@ -1157,6 +1168,8 @@
             donut('exp-tipos-veiculos', vei.map(d => d.veiculo || '—'), vei.map(d => d.total));
             barH('exp-top-clientes', cliP.map(d => d.cliente || '—'), cliP.map(d => d.total), 'Pallets', 10);
             barH('exp-destinos', destP.map(d => d.destino || '—'), destP.map(d => d.total), 'Pallets', 10);
+            barH('exp-transp-pallets', trP.map(d => d.transportadora || '—'), trP.map(d => d.total), 'Pallets', 10);
+            barH('exp-transp-carros', trC.map(d => d.transportadora || '—'), trC.map(d => d.total), 'Carros', 10);
 
             const tab = juntar('cliente', [[cliP, 'pallets'], [cliCx, 'caixas'], [cliPed, 'pedidos'], [cliCar, 'carros']]).sort((a, b) => b.pallets - a.pallets);
             tabela($('#exp-detalhe-clientes'), [
