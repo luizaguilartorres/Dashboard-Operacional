@@ -70,7 +70,7 @@ DIAS = """CASE CAST(strftime('%w', data) AS INTEGER)
 #    saindo no mesmo romaneio), então um carro = romaneio + placa.
 # --------------------------------------------------------------------------
 CARRO_REC = "recebimento"
-CARRO_EXP = "romaneio || '-' || COALESCE(placa, '')"
+CARRO_EXP = "romaneio"
 
 
 def rota(sql, coluna="data"):

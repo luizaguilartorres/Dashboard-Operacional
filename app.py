@@ -492,3 +492,5 @@ def acesso_negado(_erro):
 def pagina_nao_encontrada(_erro):
     return "Página não encontrada.", 404
 
+if __name__ == "__main__":
+    app.run(debug=True)

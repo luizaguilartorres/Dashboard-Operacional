@@ -1,29 +1,29 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Lançamentos · {{ nome_empresa }}</title>
+    <title>Lançamentos · Sebastian</title>
+
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
-            padding: 0
+            padding: 0;
         }
 
         :root {
             --bg01: #ffffff;
-            --bg02: #fff;
-            --bg03: #1c5976;
+            --bg02: #f3f7f9;
+            --bg03: #056089;
             --bg04: #1c5976;
-            --panel: #056089;
-            --panel2: #1c5976;
-            --line: #ffffff;
-            --text: #ffffff;
+            --line: #d4e0e6;
+            --text: #173042;
             --muted: #ffffff;
-            --dim: #ffffff;
-            --white: #fff
+            --dim: #536875;
+            --white: #ffffff;
         }
 
         body {
@@ -31,25 +31,26 @@
             color: var(--text);
             font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
             font-size: 14px;
-            min-height: 100vh
+            min-height: 100vh;
         }
 
         header {
             position: sticky;
             top: 0;
             z-index: 10;
-            background: var(--bg01);
-            border-bottom: 1px solid var(--line)
+            background: rgba(255,255,255,.97);
+            border-bottom: 1px solid var(--line);
+            box-shadow: 0 2px 10px rgba(23,48,66,.06);
         }
 
         .bar {
             max-width: 1440px;
-            margin: auto;
+            margin: 0 auto;
             padding: 14px 24px;
             display: flex;
             align-items: center;
-            gap: 20px;
-            flex-wrap: wrap
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .brand {
@@ -59,33 +60,31 @@
             font-size: 13px;
             display: flex;
             align-items: center;
-            gap: 14px
+            gap: 14px;
         }
 
         .brand span {
             color: var(--dim);
-            font-weight: 500
+            font-weight: 500;
         }
 
         .logo {
             height: 70px;
-            max-width: 180px;
-            object-fit: contain
         }
 
         .spacer {
-            flex: 1
+            flex: 1;
         }
 
         main {
             max-width: 1440px;
-            margin: auto;
-            padding: 24px
+            margin: 0 auto;
+            padding: 24px;
         }
 
         .btn {
             background: var(--bg03);
-            color: var(--text);
+            color: var(--white);
             border: 1px solid var(--line);
             border-radius: 8px;
             padding: 8px 12px;
@@ -95,83 +94,83 @@
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
-            transition: .15s
+            transition: .15s;
         }
 
         .btn:hover {
-            border-color: var(--bg03);
-            background-color: var(--bg01);
+            border-color: var(--white);
+            background: var(--bg01);
             color: var(--bg04);
+            outline: 1px solid var(--bg04);
+        }
+
+        .btn:disabled {
+            opacity: .6;
+            cursor: default;
         }
 
         .btn.primario {
-            background: var(--bg04);
-            color: var(--bg02);
-            border-color: var(--white)
-        }
-
-        .btn.primario:hover {
-            background: var(--bg01);
+            background: var(--white);
             color: var(--bg04);
-            border-color: var(--white)
+            border-color: var(--white);
         }
 
         .btn.perigo {
             color: #ff6b6b;
-            border-color: var(--bg01);
-            background: var(--panel)
+            border-color: #ffffff;
+            background: var(--bg04);
         }
 
         .btn.perigo:hover {
-            background: rgba(255, 107, 107, .1);
-            border-color: #ff6b6b
+            background: rgba(255,107,107,.12);
+            border-color: #ff6b6b;
+            outline: none;
         }
 
         .user-info {
             display: flex;
-            color: var(--bg04);
             align-items: center;
             gap: 12px;
             padding-left: 16px;
-            border-left: 1px solid var(--line)
+            border-left: 1px solid var(--line);
         }
 
         .ola {
             font-size: 13px;
-            color: var(--muted)
+            color: var(--dim);
         }
 
         .ola strong {
-            color: var(--text)
+            color: var(--text);
         }
 
         .tabs {
             display: flex;
             gap: 8px;
             margin-bottom: 20px;
-            flex-wrap: wrap
+            flex-wrap: wrap;
         }
 
         .tab {
             background: var(--bg04);
-            color: var(--muted);
+            color: var(--white);
             border: 1px solid var(--line);
             border-radius: 8px;
             padding: 9px 18px;
             font: inherit;
             font-weight: 600;
-            cursor: pointer
+            cursor: pointer;
         }
 
         .tab.ativa {
-            background: var(--white);
-            color: #111;
-            border-color: var(--white)
+            background: transparent;
+            color: var(--bg04);
+            border-color: var(--bg04);
         }
 
         .tab:hover {
             background: var(--bg02);
-            color: var(--bg01)
+            color: var(--bg04);
         }
 
         .card {
@@ -179,7 +178,8 @@
             border: 1px solid var(--line);
             border-radius: 12px;
             padding: 18px 20px;
-            margin-bottom: 18px
+            margin-bottom: 18px;
+            color: var(--white);
         }
 
         .card h3 {
@@ -188,13 +188,13 @@
             letter-spacing: .1em;
             color: var(--muted);
             font-weight: 600;
-            margin-bottom: 14px
+            margin-bottom: 14px;
         }
 
         .campos {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 12px
+            gap: 12px;
         }
 
         label {
@@ -205,17 +205,16 @@
             text-transform: uppercase;
             letter-spacing: .08em;
             color: var(--muted);
-            font-weight: 600
+            font-weight: 600;
         }
 
         label b {
-            color: #ff6b6b
+            color: #ff9a9a;
         }
 
-        input,
-        select {
+        input, select {
             background: var(--bg03);
-            color: var(--text);
+            color: var(--white);
             border: 1px solid var(--line);
             border-radius: 8px;
             padding: 9px 10px;
@@ -224,18 +223,17 @@
             text-transform: none;
             letter-spacing: 0;
             outline: none;
-            width: 100%
+            width: 100%;
         }
 
-        input:focus,
-        select:focus {
-            border-color: var(--muted)
+        input:focus, select:focus {
+            border-color: var(--white);
         }
 
         input[type=date],
         input[type=time],
         input[type=datetime-local] {
-            color-scheme: dark
+            color-scheme: dark;
         }
 
         .dica {
@@ -243,20 +241,20 @@
             letter-spacing: 0;
             font-weight: 500;
             font-size: 11px;
-            color: var(--dim);
-            min-height: 14px
+            color: #cfe3ec;
+            min-height: 14px;
         }
 
         .dica.ok {
-            color: #9be8ac
+            color: #9be8ac;
         }
 
         .dica.novo {
-            color: #1c5976
+            color: #ffe3a6;
         }
 
         .linhas {
-            margin-top: 18px
+            margin-top: 18px;
         }
 
         .linha {
@@ -265,7 +263,7 @@
             gap: 12px;
             align-items: end;
             padding: 12px 0;
-            border-top: 1px solid var(--line)
+            border-top: 1px solid var(--line);
         }
 
         .acoes {
@@ -273,244 +271,1373 @@
             gap: 10px;
             margin-top: 16px;
             flex-wrap: wrap;
-            align-items: center
+            align-items: center;
         }
 
         .msg {
             font-size: 13px;
             padding: 8px 12px;
             border-radius: 8px;
-            display: none
+            display: none;
         }
 
         .msg.ok {
             display: inline-block;
-            background: rgba(120, 220, 140, .12);
-            color: #9be8ac
+            background: rgba(120,220,140,.18);
+            color: #c9f5d2;
         }
 
         .msg.erro {
             display: inline-block;
-            background: rgba(255, 107, 107, .12);
-            color: #ff9a9a
+            background: rgba(255,107,107,.2);
+            color: #ffd0d0;
         }
 
         .tablewrap {
             max-height: 420px;
             overflow: auto;
             border: 1px solid var(--line);
-            border-radius: 8px
+            border-radius: 8px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px
+            font-size: 13px;
         }
 
         th {
             position: sticky;
             top: 0;
-            background: var(--panel2);
+            background: var(--bg04);
             color: var(--muted);
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: .08em;
             text-align: left;
             padding: 10px 12px;
-            white-space: nowrap
+            white-space: nowrap;
         }
 
         td {
             padding: 9px 12px;
             border-top: 1px solid var(--line);
             font-variant-numeric: tabular-nums;
-            white-space: nowrap
+            white-space: nowrap;
+            color: var(--white);
+        }
+
+        tr:hover td {
+            background: rgba(255,255,255,.05);
         }
 
         .r {
-            text-align: right
+            text-align: right;
         }
 
         .vazio {
-            color: var(--dim);
+            color: #cfe3ec;
             padding: 24px;
-            text-align: center
+            text-align: center;
         }
 
         dialog {
             background: var(--bg04);
-            color: var(--text);
+            color: var(--white);
             border: 1px solid var(--line);
             border-radius: 12px;
             padding: 20px;
             width: min(900px, 95vw);
-            margin: auto
+            margin: auto;
         }
 
         dialog::backdrop {
-            background: rgba(0, 0, 0, .55)
+            background: rgba(0,0,0,.55);
         }
 
         dialog h3 {
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: .1em;
+            color: var(--muted);
             font-weight: 600;
-            margin-bottom: 14px
+            margin-bottom: 14px;
         }
 
-        @media(max-width:700px) {
+        @media (max-width: 980px) {
             .bar {
-                padding: 12px 14px;
-                gap: 10px
-            }
-
-            .logo {
-                height: 48px;
-                max-width: 120px
-            }
-
-            .brand {
-                font-size: 11px;
-                gap: 8px
+                padding: 12px 16px;
             }
 
             main {
-                padding: 14px
-            }
-
-            .user-info {
-                padding-left: 0;
-                border-left: 0;
-                color: var(--bg04);
-            }
-
-            .card {
-                padding: 14px
-            }
-
-            .campos {
-                grid-template-columns: repeat(auto-fill, minmax(145px, 1fr))
+                padding: 16px;
             }
         }
     </style>
 </head>
 
 <body>
-    <header>
-        <div class="bar">
-            <div class="brand"><img src="{{ url_for('static', filename='img/sebastian.png') }}"
-                    alt="Logo {{ nome_empresa }}" class="logo">
-                <div>Painel <span>Operacional</span> <span><br>Sebastian</span></div>
+
+<header>
+    <div class="bar">
+
+        <div class="brand">
+            <img src="/static/img/sebastian.png"
+                 alt="Logo {{ nome_empresa }}"
+                 class="logo">
+
+            <div>
+                Painel <span>Operacional</span><br>
+                Sebastian
             </div>
-            <div class="spacer"></div>
-            <a class="btn" href="{{ url_for('dashboard', empresa_nome='sebastian') }}">← Dashboard</a><button
-                class="btn" id="excel" type="button" title="Baixa todas as linhas desta aba, com quem lançou">⬇
-                Excel</button><button class="btn" id="importar" type="button"
-                title="Importa um .xlsx com as mesmas colunas do Excel baixado">⬆ Importar</button><input type="file"
-                id="arquivo" accept=".xlsx" hidden>
-            <div class="user-info"><span class="ola">Olá, <strong>{{ usuario_logado }}</strong></span><a
-                    class="btn perigo" href="{{ url_for('logout') }}">Sair</a></div>
         </div>
-    </header>
-    <main>
-        <div class="tabs" id="tabs"></div>
-        <div class="card">
-            <h3 id="form-titulo">Novo lançamento</h3>
-            <form id="form" autocomplete="off">
-                <div class="campos" id="cabecalho"></div>
-                <div class="linhas" id="linhas"></div>
-                <div class="acoes"><button type="button" class="btn" id="add-linha">+ Adicionar linha</button><button
-                        type="submit" class="btn primario">Salvar lançamento</button><button type="button" class="btn"
-                        id="limpar">Limpar</button><span class="msg" id="msg" role="status" aria-live="polite"></span>
-                </div>
-            </form>
+
+        <div class="spacer"></div>
+
+        <a class="btn"
+           href="{{ url_for('dashboard', empresa_nome='sebastian') }}">
+            ← Dashboard
+        </a>
+
+        <button class="btn" id="excel" type="button">
+            ⬇ Excel
+        </button>
+
+        <button class="btn" id="importar" type="button">
+            ⬆ Importar
+        </button>
+
+        <input type="file" id="arquivo" accept=".xlsx" hidden>
+
+        <div class="user-info">
+            <span class="ola">
+                Olá, <strong>{{ usuario_logado }}</strong>
+            </span>
+
+            <a class="btn perigo" href="{{ url_for('logout') }}">
+                Sair
+            </a>
         </div>
-        <div class="card">
-            <h3>Últimos lançamentos <span id="lista-tipo" style="text-transform:none;letter-spacing:0"></span></h3>
-            <div id="lista"></div>
-        </div>
-    </main>
-    <dialog id="dlg">
-        <form id="ed-form" autocomplete="off">
-            <h3 id="ed-titulo">Editar lançamento</h3>
-            <div class="campos" id="ed-campos"></div>
+
+    </div>
+</header>
+
+<main>
+
+    <div class="tabs" id="tabs"></div>
+
+    <!-- FORMULÁRIO DE LANÇAMENTO -->
+    <div class="card">
+
+        <h3 id="form-titulo">Novo lançamento</h3>
+
+        <form id="form" autocomplete="off">
+
+            <div class="campos" id="cabecalho"></div>
+
+            <div class="linhas" id="linhas"></div>
+
             <div class="acoes">
-                <button type="submit" class="btn primario">Salvar alterações</button>
-                <button type="button" class="btn" id="ed-cancelar">Cancelar</button>
-                <span class="msg" id="ed-msg" role="alert"></span>
+
+                <button type="button" class="btn" id="add-linha">
+                    + Adicionar linha
+                </button>
+
+                <button type="submit" class="btn primario">
+                    Salvar lançamento
+                </button>
+
+                <button type="button" class="btn" id="limpar">
+                    Limpar
+                </button>
+
+                <span class="msg" id="msg"></span>
+
             </div>
+
         </form>
-    </dialog>
-    <datalist id="dl-cliente"></datalist><datalist id="dl-transportadora"></datalist><datalist
-        id="dl-veiculo"></datalist><datalist id="dl-destino"></datalist><datalist id="dl-motorista"></datalist>
-    <script>
-        /* Campos: a chave é o nome do campo na API (igual ao banco); l = rótulo mostrado */
-        const F = {
-            data: { l: 'Data', tipo: 'date' },
-            hora: { l: 'Hora', tipo: 'time' },
-            cliente: { l: 'Cliente', tipo: 'text', lista: 'cliente' },
-            recebimento: { l: 'Recebimento', tipo: 'text' },
-            romaneio: { l: 'Romaneio', tipo: 'text' },
-            motorista: { l: 'Motorista', tipo: 'text', lista: 'motorista' },
-            transportadora: { l: 'Transportadora', tipo: 'text', lista: 'transportadora' },
-            placa: { l: 'Placa', tipo: 'text', placa: true },
-            veiculo: { l: 'Veículo', tipo: 'text', lista: 'veiculo' },
-            destino: { l: 'Destino', tipo: 'text', lista: 'destino' },
-            nota_de_transferencia: { l: 'Nota de transferência', tipo: 'text' },
-            nota_de_deposito: { l: 'Nota de depósito', tipo: 'text' },
-            nota_fiscal: { l: 'Nota fiscal', tipo: 'text' },
-            pedido: { l: 'Pedido', tipo: 'text' },
-            qtd_pallet: { l: 'Qtd pallet', tipo: 'int' }
-        };
 
-        /* RECEBIMENTO: o número do recebimento (carro) é gerado automaticamente pelo servidor,
-           por isso só aparece na lista (mostrar) e não no formulário. */
-        const TIPOS = {
-            recebimento: {
-                nome: 'Recebimento',
-                mostrar: ['recebimento'],
-                cabecalho: ['data', 'hora', 'cliente', 'placa', 'veiculo'],
-                linha: ['nota_de_transferencia', 'nota_de_deposito', 'qtd_pallet'],
-                obrigatorios: ['data', 'cliente', 'nota_de_transferencia'],
-                limpar: ['placa', 'veiculo']
-            },
-            expedicao: {
-                nome: 'Expedição',
-                cabecalho: ['data', 'hora', 'cliente', 'romaneio', 'motorista', 'transportadora', 'placa', 'veiculo', 'destino'],
-                linha: ['nota_fiscal', 'pedido', 'qtd_pallet'],
-                obrigatorios: ['data', 'cliente', 'romaneio', 'nota_fiscal'],
-                limpar: ['romaneio', 'motorista', 'placa', 'veiculo']
-            }
-        };
+    </div>
 
-        const $ = (s, r = document) => r.querySelector(s); const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const fdata = d => { const p = String(d || '').slice(0, 10).split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : '—' }; let tipo = 'recebimento'; let linhasLista = {}; const fdh = v => { if (!v) return '—'; const [d, h] = String(v).split(/[ T]/); const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]} ${(h || '').slice(0, 5)}`.trim() }; const fval = (c, v) => { if (v == null || v === '') return '—'; const f = F[c]; return !f ? esc(v) : f.tipo === 'date' ? fdata(v) : f.tipo === 'datahora' ? fdh(v) : esc(v) };
+    <!-- LISTAGEM -->
+    <div class="card">
 
-        function campo(nome, req, edit) { const f = F[nome]; if (!f) return ''; const t = f.tipo === 'int' ? 'number' : f.tipo === 'datahora' ? 'datetime-local' : f.tipo; const extra = f.tipo === 'int' ? ' min="0" step="1"' : ''; const lista = f.lista ? ` list="dl-${f.lista}"` : ''; const placa = f.placa ? ' maxlength="8" style="text-transform:uppercase" placeholder="ABC1D23"' : ''; const dica = f.placa && !edit ? '<span class="dica" id="dica-placa"></span>' : ''; return `<label>${f.l}${req ? ' <b>*</b>' : ''}<input type="${t}" data-c="${nome}"${extra}${lista}${placa}${req ? ' required' : ''}>${dica}</label>` }
-        function montarForm() { const T = TIPOS[tipo]; $('#form-titulo').textContent = `Novo lançamento · ${T.nome}`; $('#cabecalho').innerHTML = T.cabecalho.map(c => campo(c, T.obrigatorios.includes(c))).join(''); $('#linhas').innerHTML = ''; $('#add-linha').style.display = T.linha.length ? '' : 'none'; if (T.linha.length) addLinha(); const hoje = new Date(); hoje.setMinutes(hoje.getMinutes() - hoje.getTimezoneOffset());['data'].forEach(n => { const d = $(`#cabecalho [data-c="${n}"]`); if (d) d.value = hoje.toISOString().slice(0, 10) }); msg(''); ligarPlaca() }
-        function ligarPlaca() { const pl = $('#cabecalho [data-c="placa"]'), tp = $('#cabecalho [data-c="veiculo"]'), dica = $('#dica-placa'); if (!pl || !tp || !dica) return; let ultima = ''; const buscar = async () => { const p = pl.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase(); if (p.length < 7) { dica.textContent = ''; dica.className = 'dica'; ultima = ''; return } if (p === ultima) return; ultima = p; try { const r = await fetch(`/api/sebastian/veiculos/${encodeURIComponent(p)}`); const j = await r.json(); if (!r.ok || !j.valida) { dica.textContent = 'Placa inválida'; dica.className = 'dica novo'; return } if (j.veiculo) { tp.value = j.veiculo; tp.dataset.auto = '1'; dica.textContent = '✓ veículo conhecido'; dica.className = 'dica ok' } else { dica.textContent = 'Placa nova: informe o veículo, ela será lembrada'; dica.className = 'dica novo'; tp.focus() } } catch (e) { dica.textContent = '' } }; tp.addEventListener('input', () => tp.dataset.auto = '0'); pl.addEventListener('input', () => { pl.value = pl.value.toUpperCase(); if (tp.dataset.auto === '1') { tp.value = ''; tp.dataset.auto = '0' } buscar() }); pl.addEventListener('blur', buscar) }
-        function addLinha() { const T = TIPOS[tipo], div = document.createElement('div'); div.className = 'linha'; div.innerHTML = T.linha.map(c => campo(c, T.obrigatorios.includes(c))).join('') + '<button type="button" class="btn perigo rm">Remover</button>'; div.querySelector('.rm').addEventListener('click', () => { if ($('#linhas').children.length > 1) div.remove() }); $('#linhas').appendChild(div); const primeiro = div.querySelector('input'); if ($('#linhas').children.length > 1 && primeiro) primeiro.focus() }
-        function msg(texto, ok = false) { const m = $('#msg'); m.textContent = texto; m.className = 'msg' + (texto ? (ok ? ' ok' : ' erro') : '') } function ler(raiz) { const o = {}; raiz.querySelectorAll('[data-c]').forEach(i => o[i.dataset.c] = i.value); return o }
-        $('#form').addEventListener('submit', async e => { e.preventDefault(); const T = TIPOS[tipo], corpo = { cabecalho: ler($('#cabecalho')), linhas: [...document.querySelectorAll('#linhas .linha')].map(ler) }; try { const r = await fetch(`/api/sebastian/lancamentos/${tipo}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) }); const j = await r.json().catch(() => ({})); if (!r.ok) { msg(j.erro || `Erro HTTP ${r.status}`); return } document.querySelectorAll('#linhas .linha').forEach((l, i) => { if (i) l.remove(); else l.querySelectorAll('input').forEach(x => x.value = '') }); (T.limpar || []).forEach(n => { const i = $(`#cabecalho [data-c="${n}"]`); if (i) i.value = '' }); const dp = $('#dica-placa'); if (dp) { dp.textContent = ''; dp.className = 'dica' } msg(`${j.inseridos ?? 0} linha(s) salva(s)`, true); carregarLista() } catch (err) { msg('Falha de conexão: ' + err.message) } });
-        $('#add-linha').addEventListener('click', addLinha); $('#limpar').addEventListener('click', montarForm);
-        async function carregarLista() { const T = TIPOS[tipo]; $('#lista-tipo').textContent = `· ${T.nome}`; const cols = [...new Set([...(T.mostrar || []), ...T.cabecalho, ...T.linha])]; try { const r = await fetch(`/api/sebastian/lancamentos/${tipo}?limite=40`); if (!r.ok) throw Error('HTTP ' + r.status); const rows = await r.json(); linhasLista = Object.fromEntries(rows.map(o => [String(o.id), o])); $('#lista').innerHTML = rows.length ? `<div class="tablewrap"><table><thead><tr>${cols.map(c => `<th>${F[c]?.l || esc(c)}</th>`).join('')}<th>Lançado por</th><th>Lançado em</th><th>Ações</th></tr></thead><tbody>${rows.map(o => `<tr>${cols.map(c => `<td class="${F[c]?.tipo === 'int' ? 'r' : ''}">${fval(c, o[c])}</td>`).join('')}<td>${esc(o.lancado_por ?? '—')}</td><td>${fdh(o.lancado_em)}</td><td><button class="btn" data-editar="${esc(o.id)}">Editar</button> <button class="btn perigo" data-id="${esc(o.id)}">Apagar</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="vazio">Nenhum lançamento ainda</div>' } catch (e) { $('#lista').innerHTML = `<div class="vazio">Não foi possível carregar (${esc(e.message)})</div>` } }
-        function edMsg(t) { const m = $('#ed-msg'); m.textContent = t; m.className = 'msg' + (t ? ' erro' : '') }
-        function abrirEdicao(id) {
-            const o = linhasLista[String(id)]; if (!o) return;
-            const T = TIPOS[tipo], cols = [...new Set([...(T.mostrar || []), ...T.cabecalho, ...T.linha])];
-            $('#ed-titulo').textContent = `Editar lançamento · ${T.nome}`;
-            $('#ed-campos').innerHTML = cols.map(c => campo(c, T.obrigatorios.includes(c), true)).join('');
-            cols.forEach(c => { const i = $(`#ed-campos [data-c="${c}"]`); let v = o[c] ?? ''; const t = F[c]?.tipo; if (t === 'date') v = String(v).slice(0, 10); if (t === 'time') v = String(v).slice(0, 5); if (i) i.value = v });
-            $('#ed-form').dataset.id = id; edMsg(''); $('#dlg').showModal()
+        <h3>
+            Últimos lançamentos
+            <span id="lista-tipo"
+                  style="text-transform:none;letter-spacing:0">
+            </span>
+        </h3>
+
+        <div id="lista"></div>
+
+        <div class="acoes"
+             id="mais-acoes"
+             style="justify-content:center;margin-top:14px;display:none">
+
+            <button type="button" class="btn" id="ver-mais">
+                Ver mais lançamentos
+            </button>
+
+            <span class="dica" id="mais-info"></span>
+
+        </div>
+
+    </div>
+
+</main>
+
+<!-- JANELA DE EDIÇÃO -->
+<dialog id="dlg">
+
+    <form id="ed-form" autocomplete="off">
+
+        <h3 id="ed-titulo">Editar lançamento</h3>
+
+        <div class="campos" id="ed-campos"></div>
+
+        <div class="acoes">
+
+            <button type="submit" class="btn primario">
+                Salvar alterações
+            </button>
+
+            <button type="button" class="btn" id="ed-cancelar">
+                Cancelar
+            </button>
+
+            <span class="msg" id="ed-msg" role="alert"></span>
+
+        </div>
+
+    </form>
+
+</dialog>
+
+<datalist id="dl-cliente"></datalist>
+<datalist id="dl-transportadora"></datalist>
+<datalist id="dl-veiculo"></datalist>
+<datalist id="dl-destino"></datalist>
+<datalist id="dl-motorista"></datalist>
+
+
+<script>
+
+/* =========================================
+   CONFIGURAÇÃO DOS CAMPOS
+========================================= */
+
+const F = {
+
+    data: {
+        l: 'Data',
+        tipo: 'date'
+    },
+
+    hora: {
+        l: 'Hora',
+        tipo: 'time'
+    },
+
+    cliente: {
+        l: 'Cliente',
+        tipo: 'text',
+        lista: 'cliente'
+    },
+
+    recebimento: {
+        l: 'Recebimento',
+        tipo: 'int'
+    },
+
+    placa: {
+        l: 'Placa',
+        tipo: 'text',
+        placa: true
+    },
+
+    veiculo: {
+        l: 'Veículo',
+        tipo: 'text',
+        lista: 'veiculo'
+    },
+
+    transportadora: {
+        l: 'Transportadora',
+        tipo: 'text',
+        lista: 'transportadora'
+    },
+
+    motorista: {
+        l: 'Motorista',
+        tipo: 'text',
+        lista: 'motorista'
+    },
+
+    romaneio: {
+        l: 'Romaneio',
+        tipo: 'int'
+    },
+
+    destino: {
+        l: 'Destino',
+        tipo: 'text',
+        lista: 'destino'
+    },
+
+    nota_de_transferencia: {
+        l: 'Nota de transferência',
+        tipo: 'int'
+    },
+
+    nota_de_deposito: {
+        l: 'Nota de depósito',
+        tipo: 'int'
+    },
+
+    nota_fiscal: {
+        l: 'Nota fiscal',
+        tipo: 'int'
+    },
+
+    pedido: {
+        l: 'Pedido',
+        tipo: 'text'
+    },
+
+    qtd_pallet: {
+        l: 'Qtd pallet',
+        tipo: 'int'
+    }
+
+};
+
+
+/* =========================================
+   TIPOS DE LANÇAMENTOS
+========================================= */
+
+const TIPOS = {
+
+    recebimento: {
+
+        nome: 'Recebimento',
+
+        // DADOS GERAIS DO RECEBIMENTO
+        // Cliente foi removido daqui.
+        cabecalho: [
+            'data',
+            'hora',
+            'placa',
+            'veiculo'
+        ],
+
+        // CLIENTE AGORA FICA EM CADA LINHA
+        linha: [
+            'cliente',
+            'nota_de_transferencia',
+            'nota_de_deposito',
+            'qtd_pallet'
+        ],
+
+        obrigatorios: [
+            'data',
+            'cliente',
+            'nota_de_transferencia'
+        ],
+
+        limpar: [
+            'placa',
+            'veiculo'
+        ],
+
+        colunas: [
+            'recebimento',
+            'data',
+            'hora',
+            'cliente',
+            'placa',
+            'veiculo',
+            'nota_de_transferencia',
+            'nota_de_deposito',
+            'qtd_pallet'
+        ]
+
+    },
+
+    expedicao: {
+
+        nome: 'Expedição',
+
+        cabecalho: [
+            'data',
+            'hora',
+            'cliente',
+            'transportadora',
+            'motorista',
+            'romaneio',
+            'placa',
+            'destino',
+            'veiculo'
+        ],
+
+        linha: [
+            'nota_fiscal',
+            'pedido',
+            'qtd_pallet'
+        ],
+
+        obrigatorios: [
+            'data',
+            'cliente',
+            'romaneio',
+            'nota_fiscal'
+        ],
+
+        colunas: [
+            'data',
+            'hora',
+            'cliente',
+            'transportadora',
+            'motorista',
+            'romaneio',
+            'placa',
+            'destino',
+            'veiculo',
+            'nota_fiscal',
+            'pedido',
+            'qtd_pallet'
+        ]
+
+    }
+
+};
+
+
+/* =========================================
+   FUNÇÕES AUXILIARES
+========================================= */
+
+const $ = (s, r = document) =>
+    r.querySelector(s);
+
+const esc = v =>
+    String(v ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[c]));
+
+const fdata = d => {
+
+    const p = String(d || '').slice(0, 10).split('-');
+
+    return p.length === 3
+        ? `${p[2]}/${p[1]}/${p[0]}`
+        : '—';
+
+};
+
+const fdh = v => {
+
+    if (!v) return '—';
+
+    const [d, h] = String(v).split(/[ T]/);
+
+    const p = d.split('-');
+
+    return `${p[2]}/${p[1]}/${p[0]} ${(h || '').slice(0, 5)}`.trim();
+
+};
+
+const colunas = T =>
+    T.colunas || [...new Set([...T.cabecalho, ...T.linha])];
+
+const fval = (c, v) => {
+
+    const t = F[c].tipo;
+
+    if (v == null || v === '') return '—';
+
+    return t === 'date'
+        ? fdata(v)
+        : t === 'time'
+            ? esc(String(v).slice(0, 8))
+            : esc(v);
+
+};
+
+
+/* =========================================
+   ESTADO
+========================================= */
+
+let tipo = 'recebimento';
+
+let linhasLista = {};
+
+const LIMITE_INICIAL = 40;
+const PASSO_LIMITE = 40;
+const LIMITE_MAXIMO = 500;
+
+let limiteLista = LIMITE_INICIAL;
+
+
+/* =========================================
+   CRIAÇÃO DOS CAMPOS
+========================================= */
+
+function campo(nome, req, edit) {
+
+    const f = F[nome];
+
+    const t = f.tipo === 'int'
+        ? 'number'
+        : f.tipo;
+
+    const extra = f.tipo === 'int'
+        ? ' min="0" step="1"'
+        : '';
+
+    const lista = f.lista
+        ? ` list="dl-${f.lista}"`
+        : '';
+
+    const placa = f.placa
+        ? ' maxlength="8" style="text-transform:uppercase" placeholder="ABC1D23"'
+        : '';
+
+    const dica = f.placa && !edit
+        ? '<span class="dica" id="dica-placa"></span>'
+        : '';
+
+    return `
+        <label>
+            ${f.l}${req ? ' <b>*</b>' : ''}
+
+            <input
+                type="${t}"
+                data-c="${nome}"
+                ${extra}
+                ${lista}
+                ${placa}
+                ${req ? 'required' : ''}
+            >
+
+            ${dica}
+
+        </label>
+    `;
+
+}
+
+
+/* =========================================
+   MONTA FORMULÁRIO
+========================================= */
+
+function montarForm() {
+
+    const T = TIPOS[tipo];
+
+    $('#form-titulo').textContent =
+        `Novo lançamento · ${T.nome}`;
+
+    $('#cabecalho').innerHTML =
+        T.cabecalho.map(c =>
+            campo(c, T.obrigatorios.includes(c))
+        ).join('');
+
+    $('#linhas').innerHTML = '';
+
+    addLinha();
+
+    const hoje = new Date();
+
+    hoje.setMinutes(
+        hoje.getMinutes() - hoje.getTimezoneOffset()
+    );
+
+    const d = $('#cabecalho [data-c="data"]');
+
+    if (d) {
+        d.value = hoje.toISOString().slice(0, 10);
+    }
+
+    msg('');
+
+    ligarPlaca();
+
+}
+
+
+/* =========================================
+   PLACA -> VEÍCULO AUTOMÁTICO
+========================================= */
+
+function ligarPlaca() {
+
+    const pl = $('#cabecalho [data-c="placa"]');
+
+    const vc = $('#cabecalho [data-c="veiculo"]');
+
+    const dica = $('#dica-placa');
+
+    if (!pl || !vc) return;
+
+    let ultima = '';
+
+    const buscar = async () => {
+
+        const p = pl.value
+            .replace(/[^A-Za-z0-9]/g, '')
+            .toUpperCase();
+
+        if (p.length < 7) {
+
+            dica.textContent = '';
+            dica.className = 'dica';
+            ultima = '';
+
+            return;
+
         }
-        $('#ed-cancelar').addEventListener('click', () => $('#dlg').close());
-        $('#ed-form').addEventListener('submit', async e => { e.preventDefault(); const id = e.target.dataset.id; try { const r = await fetch(`/api/sebastian/lancamentos/${tipo}/${encodeURIComponent(id)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ler($('#ed-campos'))) }); const j = await r.json().catch(() => ({})); if (!r.ok) { edMsg(j.erro || `Erro HTTP ${r.status}`); return } $('#dlg').close(); msg('Lançamento atualizado', true); carregarLista(); carregarSugestoes() } catch (err) { edMsg('Falha de conexão: ' + err.message) } });
-        $('#lista').addEventListener('click', async e => { const ed = e.target.closest('button[data-editar]'); if (ed) { abrirEdicao(ed.dataset.editar); return } const b = e.target.closest('button[data-id]'); if (!b) return; if (!confirm('Apagar esta linha? Isso não pode ser desfeito.')) return; try { const r = await fetch(`/api/sebastian/lancamentos/${tipo}/${encodeURIComponent(b.dataset.id)}`, { method: 'DELETE' }); if (!r.ok) { const j = await r.json().catch(() => ({})); msg(j.erro || 'Não foi possível apagar') } else { msg('Linha apagada', true); carregarLista() } } catch (err) { msg('Falha de conexão: ' + err.message) } });
-        $('#excel').addEventListener('click', () => window.location.href = `/api/sebastian/exportar?tabelas=${encodeURIComponent(tipo)}`); $('#importar').addEventListener('click', () => $('#arquivo').click()); $('#arquivo').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; if (!confirm(`Importar "${f.name}" em ${TIPOS[tipo].nome}?\nAs linhas serão adicionadas (nada é substituído) e ficarão registradas no seu usuário.`)) return; const fd = new FormData(); fd.append('arquivo', f); msg('Importando…', true); try { const r = await fetch(`/api/sebastian/lancamentos/${tipo}/importar`, { method: 'POST', body: fd }); const j = await r.json().catch(() => ({})); if (!r.ok) { const detalhes = Array.isArray(j.detalhes) ? ' — ' + j.detalhes.slice(0, 5).join('; ') : ''; msg((j.erro || `Erro HTTP ${r.status}`) + detalhes); return } msg(`${j.inseridos ?? 0} linha(s) importada(s)`, true); carregarLista(); carregarSugestoes() } catch (err) { msg('Falha de conexão: ' + err.message) } });
-        async function carregarSugestoes() { try { const r = await fetch('/api/sebastian/lancamentos/opcoes'); if (!r.ok) throw Error('HTTP ' + r.status); const o = await r.json(); Object.entries(o).forEach(([k, vals]) => { const dl = document.getElementById('dl-' + k); if (dl) dl.innerHTML = vals.map(v => `<option value="${esc(v)}">`).join('') }) } catch (e) { console.error('Erro ao carregar sugestões:', e) } }
-        $('#tabs').innerHTML = Object.entries(TIPOS).map(([k, t]) => `<button type="button" class="tab${k === tipo ? ' ativa' : ''}" data-t="${k}">${t.nome}</button>`).join(''); $('#tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (!b) return; tipo = b.dataset.t; document.querySelectorAll('.tab').forEach(x => x.classList.toggle('ativa', x === b)); montarForm(); carregarLista() }); montarForm(); carregarLista(); carregarSugestoes();
-    </script>
-</body>
 
+        if (p === ultima) return;
+
+        ultima = p;
+
+        try {
+
+            const j = await fetch(
+                `/api/sebastian/veiculos/${p}`
+            ).then(r => r.json());
+
+            if (!j.valida) {
+
+                dica.textContent = 'Placa inválida';
+                dica.className = 'dica novo';
+
+                return;
+
+            }
+
+            if (j.veiculo) {
+
+                vc.value = j.veiculo;
+                vc.dataset.auto = '1';
+
+                dica.textContent = '✓ veículo conhecido';
+                dica.className = 'dica ok';
+
+            } else {
+
+                dica.textContent =
+                    'Placa nova: informe o veículo, ela será lembrada';
+
+                dica.className = 'dica novo';
+
+                vc.focus();
+
+            }
+
+        } catch (e) {
+
+            dica.textContent = '';
+
+        }
+
+    };
+
+    vc.addEventListener('input', () => {
+        vc.dataset.auto = '0';
+    });
+
+    pl.addEventListener('input', () => {
+
+        pl.value = pl.value.toUpperCase();
+
+        if (vc.dataset.auto === '1') {
+
+            vc.value = '';
+            vc.dataset.auto = '0';
+
+        }
+
+        buscar();
+
+    });
+
+    pl.addEventListener('blur', buscar);
+
+}
+
+
+/* =========================================
+   ADICIONAR LINHA
+========================================= */
+
+function addLinha() {
+
+    const T = TIPOS[tipo];
+
+    const div = document.createElement('div');
+
+    div.className = 'linha';
+
+    div.innerHTML =
+        T.linha.map(c =>
+            campo(c, T.obrigatorios.includes(c))
+        ).join('') +
+
+        '<button type="button" class="btn perigo rm">Remover</button>';
+
+    div.querySelector('.rm').addEventListener('click', () => {
+
+        if ($('#linhas').children.length > 1) {
+            div.remove();
+        }
+
+    });
+
+    $('#linhas').appendChild(div);
+
+    const primeiro = div.querySelector('input');
+
+    if ($('#linhas').children.length > 1) {
+        primeiro.focus();
+    }
+
+}
+
+
+/* =========================================
+   MENSAGENS
+========================================= */
+
+function msg(texto, ok) {
+
+    const m = $('#msg');
+
+    m.textContent = texto;
+
+    m.className =
+        'msg' + (texto ? (ok ? ' ok' : ' erro') : '');
+
+}
+
+
+/* =========================================
+   LER CAMPOS
+========================================= */
+
+function ler(raiz) {
+
+    const o = {};
+
+    raiz.querySelectorAll('[data-c]').forEach(i => {
+
+        o[i.dataset.c] = i.value;
+
+    });
+
+    return o;
+
+}
+
+
+/* =========================================
+   SALVAR LANÇAMENTO
+========================================= */
+
+$('#form').addEventListener('submit', async e => {
+
+    e.preventDefault();
+
+    const T = TIPOS[tipo];
+
+    const corpo = {
+
+        cabecalho: ler($('#cabecalho')),
+
+        linhas: [
+            ...document.querySelectorAll('#linhas .linha')
+        ].map(ler)
+
+    };
+
+    try {
+
+        const r = await fetch(
+            `/api/sebastian/lancamentos/${tipo}`,
+            {
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+
+                body: JSON.stringify(corpo)
+            }
+        );
+
+        const j = await r.json().catch(() => ({}));
+
+        if (!r.ok) {
+
+            msg(j.erro || `Erro HTTP ${r.status}`);
+
+            return;
+
+        }
+
+        // Mantém o cabeçalho e limpa as linhas.
+        document.querySelectorAll('#linhas .linha')
+            .forEach((l, i) => {
+
+                if (i) {
+
+                    l.remove();
+
+                } else {
+
+                    l.querySelectorAll('input')
+                        .forEach(x => x.value = '');
+
+                }
+
+            });
+
+        // Limpa apenas placa e veículo.
+        (T.limpar || []).forEach(n => {
+
+            const i = $(`#cabecalho [data-c="${n}"]`);
+
+            if (i) i.value = '';
+
+        });
+
+        const dp = $('#dica-placa');
+
+        if (dp) {
+
+            dp.textContent = '';
+            dp.className = 'dica';
+
+        }
+
+        msg(`${j.inseridos} linha(s) salva(s)`, true);
+
+        carregarLista();
+        carregarSugestoes();
+
+    } catch (err) {
+
+        msg('Falha de conexão: ' + err.message);
+
+    }
+
+});
+
+
+/* =========================================
+   BOTÕES DO FORMULÁRIO
+========================================= */
+
+$('#add-linha').addEventListener('click', addLinha);
+
+$('#limpar').addEventListener('click', montarForm);
+
+
+/* =========================================
+   CARREGAR LANÇAMENTOS
+========================================= */
+
+async function carregarLista() {
+
+    const T = TIPOS[tipo];
+
+    $('#lista-tipo').textContent = `· ${T.nome}`;
+
+    const cols = colunas(T);
+
+    $('#mais-acoes').style.display = 'none';
+
+    try {
+
+        const r = await fetch(
+            `/api/sebastian/lancamentos/${tipo}?limite=${limiteLista}`
+        );
+
+        if (!r.ok) {
+            throw new Error('HTTP ' + r.status);
+        }
+
+        const rows = await r.json();
+
+        linhasLista = Object.fromEntries(
+            rows.map(o => [String(o.id), o])
+        );
+
+        $('#lista').innerHTML = rows.length ? `
+
+            <div class="tablewrap">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            ${cols.map(c =>
+                                `<th>${F[c].l}</th>`
+                            ).join('')}
+
+                            <th>Lançado por</th>
+                            <th>Lançado em</th>
+                            <th>Ações</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${rows.map(o => `
+
+                            <tr>
+
+                                ${cols.map(c => `
+
+                                    <td class="${F[c].tipo === 'int' ? 'r' : ''}">
+                                        ${fval(c, o[c])}
+                                    </td>
+
+                                `).join('')}
+
+                                <td>${esc(o.lancado_por ?? '—')}</td>
+
+                                <td>${fdh(o.lancado_em)}</td>
+
+                                <td>
+
+                                    <button
+                                        class="btn"
+                                        data-editar="${o.id}">
+                                        Editar
+                                    </button>
+
+                                    <button
+                                        class="btn perigo"
+                                        data-id="${o.id}">
+                                        Apagar
+                                    </button>
+
+                                </td>
+
+                            </tr>
+
+                        `).join('')}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        ` : '<div class="vazio">Nenhum lançamento ainda</div>';
+
+        if (
+            rows.length >= limiteLista &&
+            limiteLista < LIMITE_MAXIMO
+        ) {
+
+            $('#mais-acoes').style.display = 'flex';
+
+            $('#mais-info').textContent =
+                `${rows.length} lançamentos carregados`;
+
+        }
+
+    } catch (e) {
+
+        $('#lista').innerHTML = `
+            <div class="vazio">
+                Não foi possível carregar (${esc(e.message)})
+            </div>
+        `;
+
+    }
+
+}
+
+
+/* =========================================
+   VER MAIS LANÇAMENTOS
+========================================= */
+
+$('#ver-mais').addEventListener('click', async () => {
+
+    limiteLista = Math.min(
+        limiteLista + PASSO_LIMITE,
+        LIMITE_MAXIMO
+    );
+
+    $('#ver-mais').disabled = true;
+
+    $('#ver-mais').textContent = 'Carregando…';
+
+    await carregarLista();
+
+    $('#ver-mais').disabled = false;
+
+    $('#ver-mais').textContent = 'Ver mais lançamentos';
+
+});
+
+
+/* =========================================
+   EDIÇÃO
+========================================= */
+
+function edMsg(t) {
+
+    const m = $('#ed-msg');
+
+    m.textContent = t;
+
+    m.className = 'msg' + (t ? ' erro' : '');
+
+}
+
+
+function abrirEdicao(id) {
+
+    const o = linhasLista[String(id)];
+
+    if (!o) return;
+
+    const T = TIPOS[tipo];
+
+    const cols = colunas(T);
+
+    $('#ed-titulo').textContent =
+        `Editar lançamento · ${T.nome}`;
+
+    $('#ed-campos').innerHTML =
+        cols.map(c =>
+            campo(c, T.obrigatorios.includes(c), true)
+        ).join('');
+
+    cols.forEach(c => {
+
+        const i = $(`#ed-campos [data-c="${c}"]`);
+
+        if (!i) return;
+
+        let v = o[c] ?? '';
+
+        const t = F[c].tipo;
+
+        if (t === 'date') {
+            v = String(v).slice(0, 10);
+        } else if (t === 'time') {
+            v = String(v).slice(0, 5);
+        }
+
+        i.value = v;
+
+    });
+
+    $('#ed-form').dataset.id = id;
+
+    edMsg('');
+
+    $('#dlg').showModal();
+
+}
+
+
+$('#ed-cancelar').addEventListener('click', () => {
+    $('#dlg').close();
+});
+
+
+/* =========================================
+   SALVAR EDIÇÃO
+========================================= */
+
+$('#ed-form').addEventListener('submit', async e => {
+
+    e.preventDefault();
+
+    const id = e.target.dataset.id;
+
+    try {
+
+        const r = await fetch(
+            `/api/sebastian/lancamentos/${tipo}/${encodeURIComponent(id)}`,
+            {
+
+                method: 'PUT',
+
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+
+                body: JSON.stringify(
+                    ler($('#ed-campos'))
+                )
+
+            }
+        );
+
+        const j = await r.json().catch(() => ({}));
+
+        if (!r.ok) {
+
+            edMsg(j.erro || `Erro HTTP ${r.status}`);
+
+            return;
+
+        }
+
+        $('#dlg').close();
+
+        msg('Lançamento atualizado', true);
+
+        carregarLista();
+        carregarSugestoes();
+
+    } catch (err) {
+
+        edMsg('Falha de conexão: ' + err.message);
+
+    }
+
+});
+
+
+/* =========================================
+   EDITAR E APAGAR NA TABELA
+========================================= */
+
+$('#lista').addEventListener('click', async e => {
+
+    const ed = e.target.closest('button[data-editar]');
+
+    if (ed) {
+
+        abrirEdicao(ed.dataset.editar);
+
+        return;
+
+    }
+
+    const b = e.target.closest('button[data-id]');
+
+    if (!b) return;
+
+    if (!confirm('Apagar esta linha? Isso não pode ser desfeito.')) {
+        return;
+    }
+
+    const r = await fetch(
+        `/api/sebastian/lancamentos/${tipo}/${b.dataset.id}`,
+        {
+            method: 'DELETE'
+        }
+    );
+
+    if (!r.ok) {
+
+        msg('Não foi possível apagar');
+
+    } else {
+
+        msg('Linha apagada', true);
+
+        carregarLista();
+
+    }
+
+});
+
+
+/* =========================================
+   EXCEL
+========================================= */
+
+$('#excel').addEventListener('click', () => {
+
+    window.location.href =
+        `/api/sebastian/exportar?tabelas=${tipo}`;
+
+});
+
+
+/* =========================================
+   IMPORTAR EXCEL
+========================================= */
+
+$('#importar').addEventListener('click', () => {
+
+    $('#arquivo').click();
+
+});
+
+
+$('#arquivo').addEventListener('change', async e => {
+
+    const f = e.target.files[0];
+
+    e.target.value = '';
+
+    if (!f) return;
+
+    if (!confirm(
+        `Importar "${f.name}" em ${TIPOS[tipo].nome}?\n` +
+        'As linhas serão adicionadas (nada é substituído) ' +
+        'e ficarão registradas no seu usuário.'
+    )) {
+        return;
+    }
+
+    const fd = new FormData();
+
+    fd.append('arquivo', f);
+
+    msg('Importando…', true);
+
+    try {
+
+        const r = await fetch(
+            `/api/sebastian/lancamentos/${tipo}/importar`,
+            {
+                method: 'POST',
+                body: fd
+            }
+        );
+
+        const j = await r.json().catch(() => ({}));
+
+        if (!r.ok) {
+
+            msg(
+                (j.erro || `Erro HTTP ${r.status}`) +
+                (j.detalhes
+                    ? ' — ' + j.detalhes.slice(0, 5).join('; ')
+                    : '')
+            );
+
+            return;
+
+        }
+
+        msg(`${j.inseridos} linha(s) importada(s)`, true);
+
+        carregarLista();
+        carregarSugestoes();
+
+    } catch (err) {
+
+        msg('Falha de conexão: ' + err.message);
+
+    }
+
+});
+
+
+/* =========================================
+   SUGESTÕES AUTOMÁTICAS
+========================================= */
+
+async function carregarSugestoes() {
+
+    try {
+
+        const o = await fetch(
+            '/api/sebastian/lancamentos/opcoes'
+        ).then(r => r.json());
+
+        Object.entries(o).forEach(([k, vals]) => {
+
+            const dl = document.getElementById('dl-' + k);
+
+            if (dl) {
+
+                dl.innerHTML = vals.map(v =>
+                    `<option value="${esc(v)}">`
+                ).join('');
+
+            }
+
+        });
+
+    } catch (e) {
+
+        console.error(e);
+
+    }
+
+}
+
+
+/* =========================================
+   ABAS
+========================================= */
+
+$('#tabs').innerHTML =
+
+    Object.entries(TIPOS).map(([k, t]) => `
+
+        <button
+            class="tab${k === tipo ? ' ativa' : ''}"
+            data-t="${k}">
+
+            ${t.nome}
+
+        </button>
+
+    `).join('');
+
+
+$('#tabs').addEventListener('click', e => {
+
+    const b = e.target.closest('.tab');
+
+    if (!b) return;
+
+    tipo = b.dataset.t;
+
+    limiteLista = LIMITE_INICIAL;
+
+    document.querySelectorAll('.tab').forEach(x => {
+
+        x.classList.toggle('ativa', x === b);
+
+    });
+
+    montarForm();
+
+    carregarLista();
+
+});
+
+
+/* =========================================
+   INICIALIZAÇÃO
+========================================= */
+
+montarForm();
+
+carregarLista();
+
+carregarSugestoes();
+
+</script>
+
+</body>
 </html>
