@@ -574,29 +574,12 @@
             </div>
             <div class="spacer"></div>
             <div class="filters">
-                <select id="ano">
-                    <option value="">Todos os anos</option>
-                </select>
-                <select id="mes">
-                    <option value="">Todos os meses</option>
-                    <option value="1">Janeiro</option>
-                    <option value="2">Fevereiro</option>
-                    <option value="3">Março</option>
-                    <option value="4">Abril</option>
-                    <option value="5">Maio</option>
-                    <option value="6">Junho</option>
-                    <option value="7">Julho</option>
-                    <option value="8">Agosto</option>
-                    <option value="9">Setembro</option>
-                    <option value="10">Outubro</option>
-                    <option value="11">Novembro</option>
-                    <option value="12">Dezembro</option>
-                </select>
+                <select id="ano"><option value="">Todos os anos</option></select>
+                <select id="mes"><option value="">Todos os meses</option><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select>
                 <button class="btn" id="limpar" type="button">Limpar</button>
                 <button class="btn" id="atualizar" type="button">↻ Atualizar</button>
                 <a class="btn" href="{{ url_for('lancamentos') }}">+ Lançamentos</a>
-                <button class="btn" id="excel" type="button"
-                    title="Baixa os dados do período filtrado, com o usuário que lançou">⬇ Excel</button>
+                <button class="btn" id="excel" type="button" title="Baixa os dados do período filtrado, com o usuário que lançou">⬇ Excel</button>
                 <div class="status"><span class="dot" id="dot"></span><span id="upd">—</span></div>
             </div>
             <div class="user-info">
@@ -712,8 +695,7 @@
         <!-- ================= ESTOQUE (com o comparativo) ================= -->
         <section class="painel" id="painel-estoque">
             <div class="cards">
-                <div class="card"><small>Pallets em estoque</small><b id="est-saldo">-</b><span class="sub">recebido −
-                        expedido</span></div>
+                <div class="card"><small>Pallets em estoque</small><b id="est-saldo">-</b><span class="sub">recebido − expedido</span></div>
                 <div class="card"><small>Total recebido</small><b id="est-recebido">-</b></div>
                 <div class="card"><small>Total expedido</small><b id="est-expedido">-</b></div>
                 <div class="card"><small>Expedido / Recebido</small><b id="est-pct">-</b></div>
@@ -729,8 +711,7 @@
                     <div class="alt"><canvas id="est-clientes"></canvas></div>
                 </div>
                 <div class="box largo">
-                    <h3><span id="est-dia-tit">Recebido x Expedido por dia</span><span class="tools"
-                            id="est-dia-tools"></span></h3>
+                    <h3><span id="est-dia-tit">Recebido x Expedido por dia</span><span class="tools" id="est-dia-tools"></span></h3>
                     <div class="quinz">
                         <div>
                             <div class="calano" id="est-calano"></div>
@@ -743,6 +724,10 @@
                     <h3>Posição por cliente <span class="sub">saldo = recebido − expedido · todo o histórico</span></h3>
                     <div id="est-detalhe"></div>
                 </div>
+                <div class="box largo">
+                    <h3>Pedidos em estoque <span class="sub" id="est-ped-sub">recebido − expedido por pedido · todo o histórico</span></h3>
+                    <div id="est-pedidos"></div>
+                </div>
             </div>
         </section>
 
@@ -752,18 +737,14 @@
                 <div class="card"><small>Etiquetas usadas</small><b id="etq-total">-</b></div>
                 <div class="card"><small>Etiquetas de caixa</small><b id="etq-caixa">-</b></div>
                 <div class="card"><small>Etiquetas de pallet</small><b id="etq-pallet">-</b></div>
-                <div class="card"><small>Pedidos</small><b id="etq-pedidos">-</b><span class="sub"
-                        id="etq-pedidos-sub"></span></div>
-                <div class="card"><small>Entregas no prazo</small><b id="etq-prazo">-</b><span class="sub"
-                        id="etq-prazo-sub"></span></div>
-                <div class="card"><small>Tempo médio por pedido</small><b id="etq-tempo">-</b><span class="sub"
-                        id="etq-tempo-sub"></span></div>
+                <div class="card"><small>Pedidos</small><b id="etq-pedidos">-</b><span class="sub" id="etq-pedidos-sub"></span></div>
+                <div class="card"><small>Entregas no prazo</small><b id="etq-prazo">-</b><span class="sub" id="etq-prazo-sub"></span></div>
+                <div class="card"><small>Tempo médio por pedido</small><b id="etq-tempo">-</b><span class="sub" id="etq-tempo-sub"></span></div>
                 <div class="card"><small>Top cliente</small><b class="txt" id="etq-maior-cliente">-</b></div>
             </div>
             <div class="grid">
                 <div class="box largo">
-                    <h3><span id="etq-dia-tit">Etiquetas por dia</span><span class="tools" id="etq-dia-tools"></span>
-                    </h3>
+                    <h3><span id="etq-dia-tit">Etiquetas por dia</span><span class="tools" id="etq-dia-tools"></span></h3>
                     <div class="quinz">
                         <div>
                             <div class="calano" id="etq-calano"></div>
@@ -805,14 +786,12 @@
                 <div class="card"><small>Caixas devolvidas</small><b id="dev-caixas">-</b></div>
                 <div class="card"><small>Pallets</small><b id="dev-pallets">-</b></div>
                 <div class="card"><small>Devoluções (registros)</small><b id="dev-notas">-</b></div>
-                <div class="card"><small>Taxa de devolução</small><b id="dev-taxa">-</b><span class="sub">caixas
-                        devolvidas ÷ expedidas</span></div>
+                <div class="card"><small>Taxa de devolução</small><b id="dev-taxa">-</b><span class="sub">caixas devolvidas ÷ expedidas</span></div>
                 <div class="card"><small>Top cliente</small><b class="txt" id="dev-maior-cliente">-</b></div>
             </div>
             <div class="grid">
                 <div class="box largo">
-                    <h3><span id="dev-dia-tit">Caixas devolvidas por dia</span><span class="tools"
-                            id="dev-dia-tools"></span></h3>
+                    <h3><span id="dev-dia-tit">Caixas devolvidas por dia</span><span class="tools" id="dev-dia-tools"></span></h3>
                     <div class="quinz">
                         <div>
                             <div class="calano" id="dev-calano"></div>
@@ -1222,6 +1201,21 @@
                 { k: 'pct', l: '% expedido', r: 1, f: v => nf1(v) + '%' },
                 { k: 'saldo', l: 'Situação', f: v => v < 0 ? '<span class="tag">CONFERIR</span>' : v === 0 ? '<span class="tag ok">ZERADO</span>' : '<span class="tag ok">EM ESTOQUE</span>' }
             ], cli, 'estoque_por_cliente');
+
+            const ped = await safe('/api/porto/estoque/pedidos', [], TODOS);
+            const emEstoque = ped.filter(o => o.saldo > 0);
+            set('est-ped-sub', `${nf(emEstoque.length)} pedidos com saldo · ${nf(emEstoque.reduce((a, o) => a + o.saldo, 0))} pallets`);
+            tabela($('#est-pedidos'), [
+                { k: 'pedido', l: 'Pedido' },
+                { k: 'cliente', l: 'Cliente' },
+                { k: 'data_recebimento', l: 'Recebido em', f: fdataFull },
+                { k: 'ultima_expedicao', l: 'Última expedição', f: fdataFull },
+                { k: 'recebido', l: 'Recebido', r: 1, f: nf },
+                { k: 'expedido', l: 'Expedido', r: 1, f: nf },
+                { k: 'saldo', l: 'Em estoque', r: 1, f: v => `<b>${sinal(v)}</b>` },
+                { k: 'dias_parado', l: 'Dias', r: 1, f: nf },
+                { k: 'saldo', l: 'Situação', f: v => v < 0 ? '<span class="tag">CONFERIR</span>' : '<span class="tag ok">EM ESTOQUE</span>' }
+            ], ped, 'estoque_pedidos');
         }
 
         /* ====================== DEVOLUÇÃO ====================== */

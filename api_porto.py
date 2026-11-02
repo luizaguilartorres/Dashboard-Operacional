@@ -671,6 +671,43 @@ def porto_expedicao_nota_data():
 
 
 # ==========================================================
+# ESTOQUE - pedidos em estoque (recebido - expedido, por pedido)
+# ==========================================================
+@porto.route("/api/porto/estoque/pedidos")
+def porto_estoque_pedidos():
+    # Histórico completo (ignora filtro de ano/mês): saldo = pallets recebidos - pallets expedidos
+    # do mesmo num_pedido. Só lista pedidos com saldo diferente de zero.
+    return jsonify(consultar("""
+        WITH r AS (
+            SELECT TRIM(num_pedido)                 AS pedido,
+                   MAX(cliente)                     AS cliente,
+                   MIN(date(data))                  AS data_recebimento,
+                   COUNT(DISTINCT nota_fiscal)      AS notas,
+                   COALESCE(SUM(qtd_pallet), 0)     AS recebido
+            FROM recebimento
+            WHERE num_pedido IS NOT NULL AND TRIM(num_pedido) <> ''
+            GROUP BY TRIM(num_pedido)
+        ), e AS (
+            SELECT TRIM(num_pedido)                 AS pedido,
+                   MAX(date(data))                  AS ultima_expedicao,
+                   COALESCE(SUM(qtd_pallet), 0)     AS expedido
+            FROM expedicao
+            WHERE num_pedido IS NOT NULL AND TRIM(num_pedido) <> ''
+            GROUP BY TRIM(num_pedido)
+        )
+        SELECT r.pedido, r.cliente, r.data_recebimento, r.notas, r.recebido,
+               COALESCE(e.expedido, 0)                    AS expedido,
+               r.recebido - COALESCE(e.expedido, 0)       AS saldo,
+               e.ultima_expedicao,
+               CAST(julianday('now', 'localtime') - julianday(r.data_recebimento) AS INTEGER) AS dias_parado
+        FROM r
+        LEFT JOIN e ON e.pedido = r.pedido
+        WHERE r.recebido - COALESCE(e.expedido, 0) <> 0
+        ORDER BY saldo DESC, r.data_recebimento
+    """, []))
+
+
+# ==========================================================
 # NOVAS APIs - DEVOLUÇÃO
 # ==========================================================
 @porto.route("/api/porto/devolucao/resumo")
