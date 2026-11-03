@@ -349,6 +349,94 @@
             font-weight: 600;
             margin-bottom: 14px
         }
+
+        /* ---------- pesquisa (topo da lista) ---------- */
+        .lista-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px
+        }
+
+        .lista-topo h3 {
+            margin-bottom: 0
+        }
+
+        .lista-topo input {
+            width: min(380px, 100%)
+        }
+
+        /* ---------- inventário ---------- */
+        .inv-barra {
+            display: grid;
+            grid-template-columns: 200px minmax(200px, 1fr) auto;
+            gap: 12px;
+            align-items: end
+        }
+
+        .inv-status {
+            margin: 0 0 12px;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .inv-status .btn {
+            margin-top: 8px;
+        }
+
+        .inv-resumo {
+            margin: 14px 0 10px;
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .inv-tab .tablewrap {
+            max-height: 520px
+        }
+
+        td input.inv-in {
+            width: 100px;
+            text-align: right;
+            padding: 6px 8px
+        }
+
+        td input.inv-rec {
+            width: 150px;
+            min-width: 150px
+        }
+
+        td input.inv-txt {
+            width: 100%;
+            min-width: 140px;
+            padding: 6px 8px
+        }
+
+        .dif {
+            font-weight: 700
+        }
+
+        .dif.ok {
+            color: #9be8ac
+        }
+
+        .dif.falta {
+            color: #ff9a9a
+        }
+
+        .dif.sobra {
+            color: #e0c9a6
+        }
+
+        @media (max-width: 800px) {
+            .inv-barra {
+                grid-template-columns: 1fr
+            }
+        }
     </style>
 </head>
 
@@ -376,7 +464,7 @@
     <main>
         <div class="tabs" id="tabs"></div>
 
-        <div class="card">
+        <div class="card" id="card-form">
             <h3 id="form-titulo">Novo lançamento</h3>
             <form id="form" autocomplete="off">
                 <div class="campos" id="cabecalho"></div>
@@ -390,14 +478,49 @@
             </form>
         </div>
 
-        <div class="card">
-            <h3>Últimos lançamentos <span id="lista-tipo" style="text-transform:none;letter-spacing:0"></span></h3>
+        <div class="card" id="card-lista">
+            <div class="lista-topo">
+                <h3>Últimos lançamentos <span id="lista-tipo" style="text-transform:none;letter-spacing:0"></span></h3>
+                <input type="search" id="busca" placeholder="Pesquisar (pedido, NF, cliente, data…)"
+                    autocomplete="off">
+            </div>
             <div id="lista"></div>
             <div class="acoes" id="mais-acoes" style="justify-content:center; margin-top:14px; display:none">
                 <button type="button" class="btn" id="ver-mais">Ver mais lançamentos</button>
                 <span class="dica" id="mais-info"></span>
             </div>
         </div>
+
+        <!-- ================= INVENTÁRIO ================= -->
+        <div class="card inv-tab" id="card-inv" style="display:none">
+            <h3>Inventário de estoque</h3>
+            <div class="dica" style="margin-bottom:12px">A contagem é feita <b>às cegas</b> (o saldo do sistema não aparece) em até
+                3 rodadas por data. 1) <b>1ª contagem</b>. 2) <b>2ª contagem</b>, só depois da 1ª salva e por outro usuário.
+                3) Se a 1ª e a 2ª baterem em todos os pedidos, o inventário conclui e a diferença para o sistema vira ajuste no
+                estoque. Se algum pedido não bater, libera a <b>3ª contagem</b>, só desses pedidos, por um terceiro usuário
+                (ela decide o valor final). Cada usuário faz <b>uma</b> contagem por data. Pedido que está no galpão e não
+                aparece na lista entra em "+ Pedido fora do sistema" e leva a data em que foi <b>recebido</b>.</div>
+            <div class="inv-barra">
+                <label>Data do inventário <input type="date" id="inv-data"></label>
+                <label>Filtrar a lista <input type="search" id="inv-filtro" placeholder="Pedido ou cliente…"></label>
+                <button type="button" class="btn" id="inv-carregar">Carregar pedidos</button>
+            </div>
+            <div class="inv-status" id="inv-status">Escolha a data do inventário.</div>
+            <div class="inv-resumo" id="inv-resumo"></div>
+            <div id="inv-tabela"></div>
+            <div class="acoes">
+                <button type="button" class="btn" id="inv-add">+ Pedido fora do sistema</button>
+                <button type="button" class="btn primario" id="inv-salvar">Salvar inventário</button>
+                <span class="msg" id="inv-msg"></span>
+            </div>
+        </div>
+
+        <div class="card inv-tab" id="card-inv-hist" style="display:none">
+            <h3>Inventários anteriores</h3>
+            <div id="inv-hist"></div>
+            <div id="inv-det"></div>
+        </div>
+
     </main>
 
     <dialog id="dlg">
@@ -490,6 +613,8 @@
         const LIMITE_INICIAL = 40;
         const PASSO_LIMITE = 40;
         let limiteLista = LIMITE_INICIAL;
+        let seqLista = 0;
+        const nfmt = v => Number(v ?? 0).toLocaleString('pt-BR');
         let fdh = v => { if (!v) return '—'; const [d, h] = String(v).split(/[ T]/); const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]} ${(h || '').slice(0, 5)}`.trim(); };
         const fval = (c, v) => {
             const t = F[c].tipo;
@@ -607,19 +732,32 @@
             const cols = [...new Set([...T.cabecalho, ...T.linha])];
             $('#mais-acoes').style.display = 'none';
             try {
-                const r = await fetch(`/api/porto/lancamentos/${tipo}?limite=${limiteLista}`);
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                const rows = await r.json();
+                const q = $('#busca').value.trim();
+                const seq = ++seqLista;
+                let rows, info = '';
+                if (q.length >= 2) {
+                    // pesquisa em TODOS os lançamentos desta aba (não só nos últimos carregados)
+                    const r = await fetch(`/api/porto/pesquisa?q=${encodeURIComponent(q)}&tabelas=${tipo}`);
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    const d = (await r.json())[tipo];
+                    rows = d.linhas;
+                    info = `${nfmt(d.total)} resultado(s) para "${q}"` + (d.total > rows.length ? ` · mostrando os ${nfmt(rows.length)} mais recentes` : '');
+                } else {
+                    const r = await fetch(`/api/porto/lancamentos/${tipo}?limite=${limiteLista}`);
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    rows = await r.json();
+                }
+                if (seq !== seqLista) return;   // chegou uma resposta mais nova
                 linhasLista = Object.fromEntries(rows.map(o => [String(o.id), o]));
-                $('#lista').innerHTML = rows.length ? `
+                $('#lista').innerHTML = (info ? `<div class="dica" style="margin-bottom:8px">${esc(info)}</div>` : '') + (rows.length ? `
                     <div class="tablewrap"><table><thead><tr>${cols.map(c => `<th>${F[c].l}</th>`).join('')}<th>Lançado por</th><th>Lançado em</th><th></th></tr></thead>
                     <tbody>${rows.map(o => `<tr>${cols.map(c => `<td class="${F[c].tipo === 'int' ? 'r' : ''}">${fval(c, o[c])}</td>`).join('')}
                     <td>${esc(o.lancado_por ?? '—')}</td><td>${fdh(o.lancado_em)}</td>
                     <td><button class="btn" data-editar="${o.id}">Editar</button> <button class="btn perigo" data-id="${o.id}">Apagar</button></td></tr>`).join('')}</tbody></table></div>`
-                    : '<div class="vazio">Nenhum lançamento ainda</div>';
+                    : `<div class="vazio">${q.length >= 2 ? 'Nada encontrado' : 'Nenhum lançamento ainda'}</div>`);
 
                 // If the API returns as many rows as requested, there may be more to show.
-                if (rows.length >= limiteLista) {
+                if (q.length < 2 && rows.length >= limiteLista) {
                     $('#mais-acoes').style.display = 'flex';
                     $('#mais-info').textContent = `${rows.length} lançamentos carregados`;
                 }
@@ -704,11 +842,222 @@
             } catch (e) { console.error(e); }
         }
 
-        $('#tabs').innerHTML = Object.entries(TIPOS).map(([k, t]) => `<button class="tab${k === tipo ? ' ativa' : ''}" data-t="${k}">${t.nome}</button>`).join('');
+        /* ====================== PESQUISA (campo no topo da lista) ====================== */
+        let tBusca;
+        $('#busca').addEventListener('input', () => {
+            clearTimeout(tBusca);
+            tBusca = setTimeout(carregarLista, 300);   // espera parar de digitar
+        });
+
+        /* ====================== INVENTÁRIO ====================== */
+        // Contagem às cegas em até 3 rodadas por data (quem decide a rodada é o servidor):
+        //  1ª -> 2ª (outro usuário) -> se divergir, 3ª só dos pedidos divergentes (terceiro usuário).
+        // invLinhas: [{pedido, cliente, recebido, contado, obs, extra}]  (extra = pedido fora do sistema)
+        let invLinhas = [];
+        let invSt = null;   // situação da data escolhida (/api/porto/contagem/status)
+        const invHoje = () => { const h = new Date(); h.setMinutes(h.getMinutes() - h.getTimezoneOffset()); return h.toISOString().slice(0, 10); };
+        const invFmtSinal = v => (v > 0 ? '+' : '') + nfmt(v);
+
+        function invMsg(t, ok) { const m = $('#inv-msg'); m.textContent = t; m.className = 'msg' + (t ? (ok ? ' ok' : ' erro') : ''); }
+
+        function modoInventario(on) {
+            ['#card-form', '#card-lista'].forEach(s => $(s).style.display = on ? 'none' : '');
+            ['#card-inv', '#card-inv-hist'].forEach(s => $(s).style.display = on ? '' : 'none');
+            $('#excel').style.display = on ? 'none' : '';
+            $('#importar').style.display = on ? 'none' : '';
+            if (on) {
+                if (!$('#inv-data').value) $('#inv-data').value = invHoje();
+                $('#inv-data').max = invHoje();
+                invStatus();
+                invHistorico();
+            }
+        }
+
+        async function invStatus() {
+            const dia = $('#inv-data').value;
+            if (!dia) return;
+            try {
+                const r = await fetch(`/api/porto/contagem/status?data=${encodeURIComponent(dia)}`);
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                invSt = await r.json();
+            } catch (e) {
+                invSt = null;
+                $('#inv-status').textContent = 'Não foi possível consultar a situação da data: ' + e.message;
+                return;
+            }
+            invStatusRender();
+        }
+
+        function invStatusRender() {
+            const s = invSt, dia = $('#inv-data').value;
+            const feitas = s.rodadas.map(x => `${x.rodada}ª por <b>${esc(x.usuario)}</b>`).join(' · ');
+            let t;
+            if (s.status === 'concluido') t = `Inventário de ${fdata(dia)} <b>concluído</b> (#${s.lote}). ${feitas}.`;
+            else if (s.proxima === 1) t = `Nenhuma contagem feita em ${fdata(dia)}. Próxima: <b>1ª contagem</b>.`;
+            else if (s.proxima === 2) t = `Contagem de ${fdata(dia)}: ${feitas}. Próxima: <b>2ª contagem</b>, por outro usuário.`;
+            else t = `Contagem de ${fdata(dia)}: ${feitas}. A 1ª e a 2ª <b>não bateram em ${nfmt(s.divergentes.length)} pedido(s)</b>. Próxima: <b>3ª contagem</b>, só desses pedidos.`;
+            if (s.motivo) t += `<br><b>${esc(s.motivo)}</b>`;
+            if (s.ciclo && s.status !== 'concluido')
+                t += `<br><button type="button" class="btn perigo" data-cancelar="${s.ciclo}">Cancelar as contagens desta data e recomeçar</button>`;
+            $('#inv-status').innerHTML = t;
+            const pode = !!s.pode_contar;
+            $('#inv-carregar').disabled = !pode;
+            $('#inv-salvar').disabled = !pode;
+            $('#inv-carregar').textContent = pode ? `Carregar pedidos (${s.proxima}ª contagem)` : 'Carregar pedidos';
+            $('#inv-salvar').textContent = pode ? `Salvar ${s.proxima}ª contagem` : 'Salvar contagem';
+            $('#inv-add').style.display = s.proxima === 3 ? 'none' : '';
+        }
+
+        $('#inv-data').addEventListener('change', () => { invLinhas = []; invMsg(''); invRender(); invStatus(); });
+
+        $('#inv-status').addEventListener('click', async e => {
+            const b = e.target.closest('button[data-cancelar]'); if (!b) return;
+            if (!confirm('Cancelar TODAS as contagens já salvas desta data? Será preciso recomeçar da 1ª contagem.')) return;
+            const r = await fetch(`/api/porto/contagem/${b.dataset.cancelar}`, { method: 'DELETE' });
+            if (!r.ok) { invMsg('Não foi possível cancelar'); return; }
+            invLinhas = []; invMsg('Contagens canceladas', true); invRender(); invStatus();
+        });
+
+        function invResumo() {
+            if (!invLinhas.length) { $('#inv-resumo').textContent = ''; return; }
+            const contados = invLinhas.filter(l => String(l.contado).trim() !== '').length;
+            $('#inv-resumo').textContent = `${nfmt(invLinhas.length)} pedidos na lista · ${nfmt(contados)} contados`;
+        }
+
+        function invRender() {
+            const termo = $('#inv-filtro').value.trim().toLowerCase();
+            const vis = invLinhas.map((l, i) => ({ l, i })).filter(({ l }) => !termo || `${l.pedido} ${l.cliente}`.toLowerCase().includes(termo));
+            if (!invLinhas.length) { $('#inv-tabela').innerHTML = '<div class="vazio">Carregue os pedidos para começar a contagem</div>'; invResumo(); return; }
+            $('#inv-tabela').innerHTML = `<div class="tablewrap"><table><thead><tr>
+                <th>Pedido</th><th>Cliente</th><th>Recebido em</th><th class="r">Contado</th><th>Observação</th><th></th></tr></thead>
+                <tbody>${vis.length ? vis.map(({ l, i }) => `<tr>
+                    <td>${l.extra ? `<input class="inv-txt" data-i="${i}" data-k="pedido" value="${esc(l.pedido)}" placeholder="Pedido">` : esc(l.pedido)}</td>
+                    <td>${l.extra ? `<input class="inv-txt" data-i="${i}" data-k="cliente" value="${esc(l.cliente)}" placeholder="Cliente">` : esc(l.cliente || '—')}</td>
+                    <td>${l.extra ? `<input class="inv-txt inv-rec" type="date" max="${esc($('#inv-data').value)}" data-i="${i}" data-k="recebido" value="${esc(l.recebido)}" title="Data em que o pedido foi recebido">` : (l.recebido ? fdata(l.recebido) : '—')}</td>
+                    <td class="r"><input class="inv-in" type="number" min="0" step="1" data-i="${i}" data-k="contado" value="${esc(l.contado)}"></td>
+                    <td><input class="inv-txt" data-i="${i}" data-k="obs" value="${esc(l.obs)}" placeholder="Opcional"></td>
+                    <td>${l.extra ? `<button type="button" class="btn perigo" data-rm="${i}">Remover</button>` : ''}</td></tr>`).join('')
+                    : '<tr><td colspan="6" class="vazio">Nada encontrado</td></tr>'}</tbody></table></div>`;
+            invResumo();
+        }
+
+        $('#inv-tabela').addEventListener('input', e => {
+            const el = e.target, i = el.dataset.i, k = el.dataset.k; if (i === undefined || !k) return;
+            invLinhas[i][k] = el.value;
+            if (k === 'contado') invResumo();
+        });
+        $('#inv-tabela').addEventListener('click', e => {
+            const b = e.target.closest('button[data-rm]'); if (!b) return;
+            invLinhas.splice(+b.dataset.rm, 1); invRender();
+        });
+        $('#inv-filtro').addEventListener('input', invRender);
+
+        $('#inv-carregar').addEventListener('click', async () => {
+            const dia = $('#inv-data').value;
+            if (!dia) { invMsg('Escolha a data do inventário'); return; }
+            if (!invSt || !invSt.pode_contar) return;
+            if (invLinhas.some(l => String(l.contado).trim() !== '') && !confirm('Recarregar a lista apaga as contagens digitadas e ainda não salvas. Continuar?')) return;
+            invMsg('Carregando…', true);
+            try {
+                let rows;
+                if (invSt.proxima === 3) {
+                    rows = invSt.divergentes;   // 3ª contagem: só os pedidos que a 1ª e a 2ª não bateram
+                } else {
+                    const r = await fetch(`/api/porto/estoque/pedidos?ate=${encodeURIComponent(dia)}`);
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    rows = await r.json();
+                }
+                invLinhas = rows.map(o => ({ pedido: String(o.pedido), cliente: o.cliente || '', recebido: o.data_recebimento || '', contado: '', obs: '', extra: false }))
+                    .sort((a, b) => a.cliente.localeCompare(b.cliente, 'pt-BR') || a.pedido.localeCompare(b.pedido, 'pt-BR', { numeric: true }));
+                invMsg(`${nfmt(invLinhas.length)} pedidos para a ${invSt.proxima}ª contagem`, true);
+                invRender();
+            } catch (err) { invMsg('Não foi possível carregar: ' + err.message); }
+        });
+
+        $('#inv-add').addEventListener('click', () => {
+            invLinhas.unshift({ pedido: '', cliente: '', recebido: '', contado: '', obs: '', extra: true });
+            $('#inv-filtro').value = ''; invRender();
+            const p = $('#inv-tabela [data-k="pedido"]'); if (p) p.focus();
+        });
+
+        $('#inv-salvar').addEventListener('click', async () => {
+            const dia = $('#inv-data').value;
+            if (!dia) { invMsg('Escolha a data do inventário'); return; }
+            if (!invSt || !invSt.pode_contar) return;
+            const contadas = invLinhas.filter(l => String(l.contado).trim() !== '');
+            if (!contadas.length) { invMsg('Digite a quantidade contada em pelo menos um pedido'); return; }
+            if (invSt.proxima === 3 && contadas.length < invLinhas.length) { invMsg('Na 3ª contagem todos os pedidos da lista precisam ser contados'); return; }
+            const semData = contadas.find(l => l.extra && !l.recebido);
+            if (semData) { invMsg(`Informe a data de recebimento do pedido ${semData.pedido.trim() || '(sem número)'}`); return; }
+            const depois = contadas.find(l => l.extra && l.recebido > dia);
+            if (depois) { invMsg(`O pedido ${depois.pedido.trim()} não pode ter sido recebido depois da data do inventário`); return; }
+            const itens = contadas.map(l => ({ pedido: l.pedido.trim(), cliente: l.cliente, contado: l.contado, obs: l.obs,
+                data_recebimento: l.extra ? l.recebido : '' }));
+            if (!confirm(`Salvar a ${invSt.proxima}ª contagem de ${fdata(dia)}?\n\n${nfmt(itens.length)} pedidos contados.\nDepois de salva ela não pode ser alterada e você não poderá fazer outra contagem desta data.`)) return;
+            $('#inv-salvar').disabled = true; invMsg('Salvando…', true);
+            try {
+                const r = await fetch('/api/porto/contagem', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: dia, linhas: itens })
+                });
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok) { invMsg(j.erro || `Erro HTTP ${r.status}`); await invStatus(); return; }
+                if (j.status === 'concluido')
+                    invMsg(`${j.rodada}ª contagem salva e inventário concluído: ${nfmt(j.conferidos)} conferidos, ${nfmt(j.com_ajuste)} ajustados (${invFmtSinal(j.ajuste_total)} pallets)`, true);
+                else if (j.status === 'divergente')
+                    invMsg(`2ª contagem salva. ${nfmt(j.divergentes)} pedido(s) não bateram com a 1ª: a 3ª contagem foi liberada para outro usuário`, true);
+                else
+                    invMsg('1ª contagem salva. A 2ª contagem deve ser feita por outro usuário', true);
+                invLinhas = []; invRender(); await invStatus(); invHistorico();
+            } catch (err) { invMsg('Falha de conexão: ' + err.message); }
+            finally { if (invSt && invSt.pode_contar) $('#inv-salvar').disabled = false; }
+        });
+
+        async function invHistorico() {
+            try {
+                const r = await fetch('/api/porto/inventario');
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const rows = await r.json();
+                $('#inv-det').innerHTML = '';
+                $('#inv-hist').innerHTML = rows.length ? `<div class="tablewrap"><table><thead><tr>
+                    <th>Inventário</th><th>Data</th><th>Feito por</th><th>Salvo em</th><th class="r">Conferidos</th><th class="r">Com ajuste</th>
+                    <th class="r">Faltas</th><th class="r">Sobras</th><th class="r">Ajuste líquido</th><th></th></tr></thead>
+                    <tbody>${rows.map(o => `<tr><td>#${o.lote}</td><td>${fdata(o.data)}</td><td>${esc(o.lancado_por ?? '—')}</td><td>${fdh(o.lancado_em)}</td>
+                    <td class="r">${nfmt(o.conferidos)}</td><td class="r">${nfmt(o.com_ajuste)}</td><td class="r">${nfmt(o.faltas)}</td><td class="r">${nfmt(o.sobras)}</td>
+                    <td class="r"><b>${invFmtSinal(o.ajuste_total)}</b></td>
+                    <td><button class="btn" data-ver="${o.lote}">Ver</button> <button class="btn perigo" data-des="${o.lote}" data-data="${esc(o.data)}">Desfazer</button></td></tr>`).join('')}</tbody></table></div>`
+                    : '<div class="vazio">Nenhum inventário salvo ainda</div>';
+            } catch (e) { $('#inv-hist').innerHTML = `<div class="vazio">Não foi possível carregar (${esc(e.message)})</div>`; }
+        }
+
+        $('#inv-hist').addEventListener('click', async e => {
+            const ver = e.target.closest('button[data-ver]');
+            if (ver) {
+                const rows = await fetch(`/api/porto/inventario/${ver.dataset.ver}`).then(r => r.json()).catch(() => []);
+                $('#inv-det').innerHTML = `<h3 style="margin:18px 0 10px">Inventário #${esc(ver.dataset.ver)}</h3><div class="tablewrap"><table><thead><tr>
+                    <th>Pedido</th><th>Cliente</th><th>Recebido em</th><th class="r">Saldo sistema</th><th class="r">Contado</th><th class="r">Ajuste</th><th>Observação</th></tr></thead>
+                    <tbody>${rows.map(o => `<tr><td>${esc(o.pedido)}</td><td>${esc(o.cliente ?? '—')}</td><td>${o.data_recebimento ? fdata(o.data_recebimento) : '—'}</td><td class="r">${nfmt(o.saldo_sistema)}</td>
+                    <td class="r">${nfmt(o.contado)}</td><td class="r"><b>${invFmtSinal(o.ajuste)}</b></td><td>${esc(o.obs ?? '')}</td></tr>`).join('')}</tbody></table></div>`;
+                return;
+            }
+            const des = e.target.closest('button[data-des]');
+            if (des) {
+                if (!confirm(`Desfazer o inventário #${des.dataset.des} (${fdata(des.dataset.data)})?\n\nOs ajustes dele saem do saldo do estoque. Se existirem inventários feitos depois dele, confira-os.`)) return;
+                const r = await fetch(`/api/porto/inventario/${des.dataset.des}`, { method: 'DELETE' });
+                if (!r.ok) invMsg('Não foi possível desfazer'); else { invMsg('Inventário desfeito', true); invHistorico(); invStatus(); }
+            }
+        });
+
+        /* ====================== ABAS ====================== */
+        $('#tabs').innerHTML = Object.entries(TIPOS).map(([k, t]) => `<button class="tab${k === tipo ? ' ativa' : ''}" data-t="${k}">${t.nome}</button>`).join('')
+            + '<button class="tab" data-t="inventario">Inventário</button>';
         $('#tabs').addEventListener('click', e => {
             const b = e.target.closest('.tab'); if (!b) return;
+            document.querySelectorAll('.tab').forEach(x => x.classList.toggle('ativa', x === b));
+            if (b.dataset.t === 'inventario') { modoInventario(true); return; }
+            modoInventario(false);
             tipo = b.dataset.t;
             limiteLista = LIMITE_INICIAL;
+            $('#busca').value = '';
             document.querySelectorAll('.tab').forEach(x => x.classList.toggle('ativa', x === b));
             montarForm(); carregarLista();
         });

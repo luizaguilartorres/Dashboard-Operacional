@@ -29,6 +29,12 @@ def data():
     return ano, mes
 
 
+def _data_ate():
+    """?ate=aaaa-mm-dd (opcional): limite superior de data, usado no cálculo de estoque."""
+    ate = (request.args.get("ate") or "").strip()
+    return ate if re.fullmatch(r"\d{4}-\d{2}-\d{2}", ate) else None
+
+
 def filtro_dados(coluna="data"):
     ano, mes = data()
     filtro, params = [], []
@@ -38,6 +44,10 @@ def filtro_dados(coluna="data"):
     if mes:
         filtro.append(f"strftime('%m',{coluna}) = ?")
         params.append(mes)
+    ate = _data_ate()
+    if ate:   # só a aba Estoque usa: posição acumulada até esta data (aaaa-mm-dd)
+        filtro.append(f"date({coluna}) <= ?")
+        params.append(ate)
     where = "WHERE " + " AND ".join(filtro) if filtro else ""
     return where, params
 
@@ -673,11 +683,42 @@ def porto_expedicao_nota_data():
 # ==========================================================
 # ESTOQUE - pedidos em estoque (recebido - expedido, por pedido)
 # ==========================================================
-@porto.route("/api/porto/estoque/pedidos")
-def porto_estoque_pedidos():
-    # Histórico completo (ignora filtro de ano/mês): saldo = pallets recebidos - pallets expedidos
-    # do mesmo num_pedido. Só lista pedidos com saldo diferente de zero.
-    return jsonify(consultar("""
+def _garantir_inventario():
+    """Cria a tabela dos inventários (cada linha = um pedido conferido; 'ajuste' = contado - saldo do sistema)."""
+    conn = sqlite3.connect(CAMINHO_BANCO)
+    try:
+        with conn:
+            conn.execute("""CREATE TABLE IF NOT EXISTS inventario_itens (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                lote INTEGER NOT NULL,            -- um inventário salvo = um lote
+                                data_inventario TEXT NOT NULL,    -- aaaa-mm-dd: a partir daqui o ajuste vale no saldo
+                                pedido TEXT NOT NULL,
+                                cliente TEXT,
+                                saldo_sistema INTEGER NOT NULL,   -- saldo que o sistema tinha na data
+                                contado INTEGER NOT NULL,         -- pallets contados no galpão
+                                ajuste INTEGER NOT NULL,          -- contado - saldo_sistema
+                                obs TEXT,
+                                data_recebimento TEXT,            -- aaaa-mm-dd: só em pedido novo na contagem (nao existe no recebimento)
+                                lancado_por TEXT,
+                                lancado_em TEXT)""")
+            # bancos criados antes desta coluna: adiciona sem perder os inventários já salvos
+            cols = {r[1] for r in conn.execute("PRAGMA table_info(inventario_itens)")}
+            if "data_recebimento" not in cols:
+                conn.execute("ALTER TABLE inventario_itens ADD COLUMN data_recebimento TEXT")
+    finally:
+        conn.close()
+
+
+# Data em que o ajuste "acontece" no estoque: pedido novo na contagem vale na data em que foi
+# recebido (assim cai no mês certo no dashboard); os demais valem na data do inventário.
+DATA_AJUSTE = "COALESCE(date(data_recebimento), date(data_inventario))"
+
+
+def _saldo_pedidos(ate):
+    """Saldo por pedido até a data 'ate': recebido - expedido + ajustes de inventário.
+    Lista só pedidos com saldo diferente de zero (inclui pedidos que só existem por ajuste)."""
+    _garantir_inventario()
+    return consultar("""
         WITH r AS (
             SELECT TRIM(num_pedido)                 AS pedido,
                    MAX(cliente)                     AS cliente,
@@ -685,26 +726,408 @@ def porto_estoque_pedidos():
                    COUNT(DISTINCT nota_fiscal)      AS notas,
                    COALESCE(SUM(qtd_pallet), 0)     AS recebido
             FROM recebimento
-            WHERE num_pedido IS NOT NULL AND TRIM(num_pedido) <> ''
+            WHERE num_pedido IS NOT NULL AND TRIM(num_pedido) <> '' AND date(data) <= ?
             GROUP BY TRIM(num_pedido)
         ), e AS (
             SELECT TRIM(num_pedido)                 AS pedido,
                    MAX(date(data))                  AS ultima_expedicao,
                    COALESCE(SUM(qtd_pallet), 0)     AS expedido
             FROM expedicao
-            WHERE num_pedido IS NOT NULL AND TRIM(num_pedido) <> ''
+            WHERE num_pedido IS NOT NULL AND TRIM(num_pedido) <> '' AND date(data) <= ?
             GROUP BY TRIM(num_pedido)
+        ), a AS (
+            SELECT TRIM(pedido)                     AS pedido,
+                   MAX(cliente)                     AS cliente,
+                   MIN(date(data_recebimento))      AS data_recebimento,
+                   COALESCE(SUM(ajuste), 0)         AS ajuste
+            FROM inventario_itens
+            WHERE """ + DATA_AJUSTE + """ <= ?
+            GROUP BY TRIM(pedido)
+        ), p AS (
+            SELECT pedido FROM r UNION SELECT pedido FROM a
         )
-        SELECT r.pedido, r.cliente, r.data_recebimento, r.notas, r.recebido,
+        SELECT p.pedido,
+               COALESCE(r.cliente, a.cliente)             AS cliente,
+               COALESCE(r.data_recebimento, a.data_recebimento) AS data_recebimento,
+               COALESCE(r.notas, 0)                       AS notas,
+               COALESCE(r.recebido, 0)                    AS recebido,
                COALESCE(e.expedido, 0)                    AS expedido,
-               r.recebido - COALESCE(e.expedido, 0)       AS saldo,
+               COALESCE(a.ajuste, 0)                      AS ajuste,
+               COALESCE(r.recebido, 0) - COALESCE(e.expedido, 0) + COALESCE(a.ajuste, 0) AS saldo,
                e.ultima_expedicao,
-               CAST(julianday('now', 'localtime') - julianday(r.data_recebimento) AS INTEGER) AS dias_parado
-        FROM r
-        LEFT JOIN e ON e.pedido = r.pedido
-        WHERE r.recebido - COALESCE(e.expedido, 0) <> 0
-        ORDER BY saldo DESC, r.data_recebimento
+               CAST(julianday(?) - julianday(COALESCE(r.data_recebimento, a.data_recebimento)) AS INTEGER) AS dias_parado
+        FROM p
+        LEFT JOIN r ON r.pedido = p.pedido
+        LEFT JOIN e ON e.pedido = p.pedido
+        LEFT JOIN a ON a.pedido = p.pedido
+        WHERE COALESCE(r.recebido, 0) - COALESCE(e.expedido, 0) + COALESCE(a.ajuste, 0) <> 0
+        ORDER BY saldo DESC, COALESCE(r.data_recebimento, a.data_recebimento)
+    """, [ate, ate, ate, ate])
+
+
+@porto.route("/api/porto/estoque/pedidos")
+def porto_estoque_pedidos():
+    # Posição acumulada até ?ate=aaaa-mm-dd (sem ?ate, até hoje).
+    return jsonify(_saldo_pedidos(_data_ate() or datetime.now().strftime("%Y-%m-%d")))
+
+
+@porto.route("/api/porto/estoque/ajustes/por-cliente")
+def porto_estoque_ajustes_cliente():
+    _garantir_inventario()
+    return rota("""
+        SELECT cliente, COALESCE(SUM(ajuste), 0) AS total
+        FROM inventario_itens
+        {where}
+        GROUP BY cliente
+    """, DATA_AJUSTE)
+
+
+@porto.route("/api/porto/estoque/ajustes/data")
+def porto_estoque_ajustes_data():
+    _garantir_inventario()
+    return rota("""
+        SELECT COALESCE(date(data_recebimento), date(data_inventario)) AS data,
+               COALESCE(SUM(ajuste), 0) AS total
+        FROM inventario_itens
+        {where}
+        GROUP BY COALESCE(date(data_recebimento), date(data_inventario))
+        ORDER BY data
+    """, DATA_AJUSTE)
+
+
+# ==========================================================
+# INVENTÁRIO (mensal): conta no galpão -> ajusta o saldo do estoque
+# ==========================================================
+# O sistema calcula o saldo de cada pedido (recebido - expedido + ajustes). No inventário as
+# pessoas informam o que CONTARAM (em até 3 rodadas, veja CONTAGEM EM RODADAS abaixo); ao
+# concluir, o ajuste gravado é (contado final - saldo do sistema na data).
+# Esse ajuste passa a fazer parte do saldo do estoque, sem mexer nos lançamentos de
+# recebimento e expedição. Desfazer um inventário remove os ajustes dele.
+@porto.route("/api/porto/inventario", methods=["GET"])
+def porto_inv_listar():
+    _garantir_inventario()
+    return jsonify(consultar("""
+        SELECT lote, data_inventario AS data,
+               MIN(lancado_por) AS lancado_por, MIN(lancado_em) AS lancado_em,
+               COUNT(*) AS conferidos,
+               SUM(CASE WHEN ajuste <> 0 THEN 1 ELSE 0 END) AS com_ajuste,
+               SUM(CASE WHEN ajuste > 0 THEN ajuste ELSE 0 END)  AS sobras,
+               SUM(CASE WHEN ajuste < 0 THEN -ajuste ELSE 0 END) AS faltas,
+               SUM(ajuste) AS ajuste_total
+        FROM inventario_itens
+        GROUP BY lote
+        ORDER BY lote DESC
+        LIMIT 60
     """, []))
+
+
+@porto.route("/api/porto/inventario/<int:lote>", methods=["GET"])
+def porto_inv_detalhe(lote):
+    _garantir_inventario()
+    return jsonify(consultar("""
+        SELECT pedido, cliente, date(data_recebimento) AS data_recebimento, saldo_sistema, contado, ajuste, obs
+        FROM inventario_itens
+        WHERE lote = ?
+        ORDER BY cliente, pedido
+    """, [lote]))
+
+
+# ----------------------------------------------------------
+# CONTAGEM EM RODADAS (1ª, 2ª e, se divergir, 3ª)
+# ----------------------------------------------------------
+# Regras (uma data de inventário = um "ciclo"):
+#  - 1ª contagem: qualquer usuário. A 2ª só abre depois que a 1ª foi salva.
+#  - Cada usuário faz UMA contagem por ciclo (1ª, 2ª e 3ª são de pessoas diferentes).
+#  - Se 1ª e 2ª batem em todos os pedidos, o inventário conclui e o ajuste entra no saldo.
+#  - Se algum pedido não bate (ou foi contado só em uma delas), abre a 3ª contagem,
+#    só desses pedidos. A 3ª decide o valor final deles.
+#  - Só quando conclui é que as linhas vão para inventario_itens (o que o estoque lê).
+def _garantir_contagens():
+    conn = sqlite3.connect(CAMINHO_BANCO)
+    try:
+        with conn:
+            conn.execute("""CREATE TABLE IF NOT EXISTS inventario_ciclos (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                data_inventario TEXT NOT NULL,
+                                status TEXT NOT NULL,             -- 'em_andamento' | 'concluido'
+                                lote INTEGER,                     -- lote gerado em inventario_itens ao concluir
+                                criado_por TEXT,
+                                criado_em TEXT)""")
+            conn.execute("""CREATE TABLE IF NOT EXISTS inventario_contagens (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                ciclo INTEGER NOT NULL,
+                                rodada INTEGER NOT NULL,          -- 1, 2 ou 3
+                                pedido TEXT NOT NULL,
+                                cliente TEXT,
+                                contado INTEGER NOT NULL,
+                                obs TEXT,
+                                data_recebimento TEXT,
+                                usuario TEXT NOT NULL,
+                                lancado_em TEXT)""")
+    finally:
+        conn.close()
+
+
+def _conn_contagem():
+    conn = sqlite3.connect(CAMINHO_BANCO, isolation_level=None, timeout=15)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def _ciclo_da_data(conn, dia):
+    return conn.execute("SELECT * FROM inventario_ciclos WHERE data_inventario = ? ORDER BY id DESC LIMIT 1",
+                        (dia,)).fetchone()
+
+
+def _ler_contagens(conn, ciclo_id):
+    """por[rodada][pedido] = linha; usuarios[rodada] = quem contou; quando[rodada] = quando."""
+    por, usuarios, quando = {1: {}, 2: {}, 3: {}}, {}, {}
+    for r in conn.execute("SELECT * FROM inventario_contagens WHERE ciclo = ? ORDER BY id", (ciclo_id,)):
+        por[r["rodada"]][r["pedido"]] = dict(r)
+        usuarios[r["rodada"]] = r["usuario"]
+        quando[r["rodada"]] = r["lancado_em"]
+    return por, usuarios, quando
+
+
+def _divergentes(por):
+    """Pedidos em que 1ª e 2ª não batem (inclui pedido contado só em uma das duas)."""
+    peds = set(por[1]) | set(por[2])
+    return sorted(p for p in peds
+                  if p not in por[1] or p not in por[2] or por[1][p]["contado"] != por[2][p]["contado"])
+
+
+def _proxima_rodada(ciclo, por):
+    if ciclo is not None and ciclo["status"] == "concluido":
+        return None
+    return 1 if not por[1] else 2 if not por[2] else 3
+
+
+def _validar_linhas(linhas, dia):
+    """Devolve ([(pedido, cliente, contado, obs, recebido_em)], erro)."""
+    itens, vistos = [], set()
+    for i, ln in enumerate(linhas, start=1):
+        try:
+            if not isinstance(ln, dict):
+                raise ValueError("linha inválida")
+            pedido = remover_acentos(str(ln.get("pedido") or "").strip())[:60]
+            if not pedido:
+                raise ValueError("informe o pedido")
+            if pedido in vistos:
+                raise ValueError(f"pedido {pedido} repetido")
+            vistos.add(pedido)
+            bruto = "" if ln.get("contado") is None else str(ln.get("contado")).strip()
+            if bruto == "":
+                raise ValueError(f"pedido {pedido}: informe a quantidade contada")
+            try:
+                contado = int(float(bruto.replace(",", ".")))
+            except ValueError:
+                raise ValueError(f"pedido {pedido}: quantidade contada inválida")
+            if contado < 0:
+                raise ValueError(f"pedido {pedido}: a quantidade contada não pode ser negativa")
+            obs = remover_acentos(str(ln.get("obs") or "").strip())[:200] or None
+            cliente = remover_acentos(str(ln.get("cliente") or "").strip()).upper()[:120] or None
+            recebido_em = None
+            bruto_rec = str(ln.get("data_recebimento") or "").strip()
+            if bruto_rec:
+                try:
+                    recebido_em = _data(bruto_rec).strftime("%Y-%m-%d")
+                except ValueError:
+                    raise ValueError(f"pedido {pedido}: data de recebimento inválida")
+                if recebido_em > dia:
+                    raise ValueError(f"pedido {pedido}: o recebimento não pode ser depois da data do inventário")
+        except ValueError as e:
+            return None, f"linha {i}: {e}"
+        itens.append((pedido, cliente, contado, obs, recebido_em))
+    return itens, None
+
+
+def _concluir_ciclo(conn, ciclo_id, dia, por, usuarios, saldos, quando):
+    """Junta as rodadas no valor final de cada pedido e grava o lote que o estoque lê."""
+    lote = conn.execute("SELECT COALESCE(MAX(lote), 0) + 1 FROM inventario_itens").fetchone()[0]
+    quem = " / ".join(dict.fromkeys(usuarios[r] for r in (1, 2, 3) if r in usuarios))[:200]
+    linhas = []
+    for p in sorted(set(por[1]) | set(por[2]) | set(por[3])):
+        reg = [por[r][p] for r in (1, 2, 3) if p in por[r]]
+        valor = por[3][p]["contado"] if p in por[3] else por[1][p]["contado"]   # 3ª decide; senão 1ª = 2ª
+        obs = " | ".join(dict.fromkeys(x["obs"] for x in reg if x["obs"]))[:200] or None
+        cli_cont = next((x["cliente"] for x in reg if x["cliente"]), None)
+        rec = next((x["data_recebimento"] for x in reg if x["data_recebimento"]), None)
+        s = saldos.get(p)
+        sis = int(s["saldo"]) if s else 0
+        cliente = (s["cliente"] if s and s["cliente"] else cli_cont) or None
+        if s and s["data_recebimento"]:
+            rec = None   # pedido que o sistema já conhece: a data de recebimento dele já existe
+        linhas.append((lote, dia, p, cliente, sis, valor, valor - sis, obs, rec, quem, quando))
+    conn.executemany(
+        """INSERT INTO inventario_itens
+           (lote, data_inventario, pedido, cliente, saldo_sistema, contado, ajuste, obs, data_recebimento, lancado_por, lancado_em)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", linhas)
+    conn.execute("UPDATE inventario_ciclos SET status = 'concluido', lote = ? WHERE id = ?", (lote, ciclo_id))
+    return lote, linhas
+
+
+@porto.route("/api/porto/contagem/status", methods=["GET"])
+def porto_contagem_status():
+    """?data=aaaa-mm-dd -> em que rodada está o inventário da data e se ESTE usuário pode contar agora."""
+    _garantir_inventario()
+    _garantir_contagens()
+    try:
+        dia = _data(request.args.get("data") or "").strftime("%Y-%m-%d")
+    except ValueError:
+        return jsonify(erro="data inválida"), 400
+    quem = _usuario()
+    conn = _conn_contagem()
+    try:
+        ciclo = _ciclo_da_data(conn, dia)
+        por, usuarios, quando = _ler_contagens(conn, ciclo["id"]) if ciclo else ({1: {}, 2: {}, 3: {}}, {}, {})
+    finally:
+        conn.close()
+    proxima = _proxima_rodada(ciclo, por)
+    divergentes = []
+    if proxima == 3:
+        for p in _divergentes(por):
+            reg = [por[r][p] for r in (1, 2) if p in por[r]]
+            divergentes.append({"pedido": p,
+                                "cliente": next((x["cliente"] for x in reg if x["cliente"]), None),
+                                "data_recebimento": next((x["data_recebimento"] for x in reg if x["data_recebimento"]), None)})
+    pode, motivo = True, None
+    if proxima is None:
+        pode, motivo = False, "Este inventário já foi concluído. Para refazer, desfaça-o em \"Inventários anteriores\"."
+    elif quem in usuarios.values():
+        feita = next(r for r, u in usuarios.items() if u == quem)
+        pode, motivo = False, (f"Você já fez a {feita}ª contagem desta data. Cada usuário só pode fazer uma; "
+                               "a próxima precisa ser feita por outra pessoa.")
+    return jsonify(ciclo=ciclo["id"] if ciclo else None,
+                   status=ciclo["status"] if ciclo else "novo",
+                   lote=ciclo["lote"] if ciclo else None,
+                   proxima=proxima, pode_contar=pode, motivo=motivo, usuario=quem,
+                   rodadas=[{"rodada": r, "usuario": usuarios[r], "em": quando[r], "pedidos": len(por[r])}
+                            for r in sorted(usuarios)],
+                   divergentes=divergentes)
+
+
+@porto.route("/api/porto/contagem", methods=["POST"])
+def porto_contagem_salvar():
+    """Corpo: {data: 'aaaa-mm-dd', linhas: [{pedido, cliente, contado, obs, data_recebimento}]}.
+    O servidor decide se é a 1ª, 2ª ou 3ª contagem; o navegador não escolhe."""
+    corpo = request.get_json(silent=True)
+    if not isinstance(corpo, dict):
+        return jsonify(erro="envie JSON"), 400
+    try:
+        dia = _data(str(corpo.get("data") or "")).strftime("%Y-%m-%d")
+    except ValueError:
+        return jsonify(erro="data do inventário inválida"), 400
+    if dia > _agora()[:10]:
+        return jsonify(erro="a data do inventário não pode ser futura"), 400
+    linhas = corpo.get("linhas")
+    if not isinstance(linhas, list) or not linhas or len(linhas) > 3000:
+        return jsonify(erro="informe de 1 a 3000 pedidos contados"), 400
+    itens, erro = _validar_linhas(linhas, dia)
+    if erro:
+        return jsonify(erro=erro), 400
+
+    _garantir_inventario()
+    _garantir_contagens()
+    saldos = {r["pedido"]: r for r in _saldo_pedidos(dia)}   # calculado fora da transação de escrita
+    quem, quando = _usuario(), _agora()
+
+    conn = _conn_contagem()
+    try:
+        conn.execute("BEGIN IMMEDIATE")   # trava escrita: dois usuários não furam a ordem das rodadas
+        try:
+            resp, codigo = _registrar_contagem(conn, dia, itens, saldos, quem, quando)
+            conn.execute("COMMIT" if codigo < 300 else "ROLLBACK")
+        except Exception:
+            if conn.in_transaction:
+                conn.execute("ROLLBACK")
+            raise
+    finally:
+        conn.close()
+    return jsonify(resp), codigo
+
+
+def _registrar_contagem(conn, dia, itens, saldos, quem, quando):
+    ciclo = _ciclo_da_data(conn, dia)
+    if ciclo is not None and ciclo["status"] == "concluido":
+        return {"erro": "Este inventário já foi concluído. Para refazer, desfaça-o em \"Inventários anteriores\"."}, 409
+    if ciclo is None:
+        ciclo_id = conn.execute("INSERT INTO inventario_ciclos (data_inventario, status, criado_por, criado_em) "
+                                "VALUES (?, 'em_andamento', ?, ?)", (dia, quem, quando)).lastrowid
+        por, usuarios = {1: {}, 2: {}, 3: {}}, {}
+    else:
+        ciclo_id = ciclo["id"]
+        por, usuarios, _ = _ler_contagens(conn, ciclo_id)
+
+    if quem in usuarios.values():   # uma contagem por usuário
+        feita = next(r for r, u in usuarios.items() if u == quem)
+        return {"erro": f"Você já fez a {feita}ª contagem desta data. Cada usuário só pode fazer uma; "
+                        "a próxima precisa ser feita por outra pessoa."}, 403
+
+    rodada = _proxima_rodada(ciclo, por)
+    if rodada == 3:
+        div = set(_divergentes(por))
+        enviados = {it[0] for it in itens}
+        if enviados - div:
+            return {"erro": "A 3ª contagem é só dos pedidos que divergiram. Fora da lista: "
+                            + ", ".join(sorted(enviados - div)[:10])}, 400
+        if div - enviados:
+            return {"erro": "A 3ª contagem precisa ter todos os pedidos que divergiram. Faltam: "
+                            + ", ".join(sorted(div - enviados)[:10])}, 400
+
+    conn.executemany(
+        """INSERT INTO inventario_contagens
+           (ciclo, rodada, pedido, cliente, contado, obs, data_recebimento, usuario, lancado_em)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        [(ciclo_id, rodada, p, cli, c, obs, rec, quem, quando) for (p, cli, c, obs, rec) in itens])
+    por, usuarios, _ = _ler_contagens(conn, ciclo_id)
+
+    if rodada == 1:
+        return {"ok": True, "rodada": 1, "status": "aguardando_2", "pedidos": len(itens)}, 201
+    div = _divergentes(por)
+    if rodada == 2 and div:
+        return {"ok": True, "rodada": 2, "status": "divergente", "pedidos": len(itens),
+                "divergentes": len(div)}, 201
+    lote, linhas = _concluir_ciclo(conn, ciclo_id, dia, por, usuarios, saldos, quando)
+    return {"ok": True, "rodada": rodada, "status": "concluido", "lote": lote, "conferidos": len(linhas),
+            "com_ajuste": sum(1 for ln in linhas if ln[6] != 0),
+            "ajuste_total": sum(ln[6] for ln in linhas)}, 201
+
+
+@porto.route("/api/porto/contagem/<int:ciclo>", methods=["DELETE"])
+def porto_contagem_cancelar(ciclo):
+    """Cancela contagens de um inventário ainda em andamento (para recomeçar da 1ª)."""
+    _garantir_contagens()
+    conn = _conn_contagem()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        c = conn.execute("SELECT status FROM inventario_ciclos WHERE id = ?", (ciclo,)).fetchone()
+        if c is None:
+            conn.execute("ROLLBACK")
+            return jsonify(ok=False), 404
+        if c["status"] == "concluido":
+            conn.execute("ROLLBACK")
+            return jsonify(erro="inventário já concluído: desfaça-o em \"Inventários anteriores\""), 409
+        conn.execute("DELETE FROM inventario_contagens WHERE ciclo = ?", (ciclo,))
+        conn.execute("DELETE FROM inventario_ciclos WHERE id = ?", (ciclo,))
+        conn.execute("COMMIT")
+    finally:
+        conn.close()
+    return jsonify(ok=True)
+
+
+@porto.route("/api/porto/inventario/<int:lote>", methods=["DELETE"])
+def porto_inv_desfazer(lote):
+    _garantir_inventario()
+    _garantir_contagens()
+    conn = sqlite3.connect(CAMINHO_BANCO)
+    try:
+        with conn:
+            n = conn.execute("DELETE FROM inventario_itens WHERE lote = ?", (lote,)).rowcount
+            conn.execute("DELETE FROM inventario_contagens WHERE ciclo IN (SELECT id FROM inventario_ciclos WHERE lote = ?)", (lote,))
+            conn.execute("DELETE FROM inventario_ciclos WHERE lote = ?", (lote,))
+    finally:
+        conn.close()
+    return jsonify(ok=bool(n), removidos=n), (200 if n else 404)
 
 
 # ==========================================================
@@ -1225,6 +1648,64 @@ def porto_lanc_inserir(tabela):
     except ValueError as e:
         return jsonify(erro=str(e)), 400
     return jsonify(ok=True, inseridos=len(registros)), 201
+
+
+@porto.route("/api/porto/pesquisa")
+def porto_pesquisa():
+    """Pesquisa um termo em todos os lançamentos (recebimento, expedição, etiquetas, devolução).
+    ?q=termo &tabelas=recebimento,expedicao (opcional). Procura em todos os campos de texto/número
+    e, se o termo for uma data (dd/mm/aaaa ou aaaa-mm-dd), nos campos de data."""
+    q = (request.args.get("q") or "").strip()
+    if len(q) < 2:
+        return jsonify(erro="digite pelo menos 2 caracteres"), 400
+    q = q[:60]
+    pedidas = [t for t in (request.args.get("tabelas") or "").split(",") if t in LANC] or list(LANC)
+
+    iso = None
+    for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+        try:
+            iso = datetime.strptime(q, fmt).strftime("%Y-%m-%d")
+            break
+        except ValueError:
+            pass
+    termo = remover_acentos(q).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    like = f"%{termo}%"
+    LIMITE = 300
+
+    saida = {}
+    for tab in pedidas:
+        cfg = LANC[tab]
+        campos = list(dict.fromkeys(cfg["cabecalho"] + cfg["linha"]))
+        sel, conds, params = [], [], []
+        for c in campos:
+            col, tp = _q(_col(tab, c)), TIPO_CAMPO.get(c, "text")
+            if tp == "date":
+                sel.append(f"date({col}) AS {c}")
+                if iso:
+                    conds.append(f"date({col}) = ?")
+                    params.append(iso)
+            elif tp == "datahora":
+                sel.append(f"substr({col}, 1, 16) AS {c}")
+                if iso:
+                    conds.append(f"date({col}) = ?")
+                    params.append(iso)
+            elif tp == "hora":
+                sel.append(f"{col} AS {c}")
+            else:
+                sel.append(f"{col} AS {c}")
+                conds.append(f"CAST({col} AS TEXT) LIKE ? ESCAPE '\\'")
+                params.append(like)
+        where = " OR ".join(conds)
+        conn = _abrir(tab)
+        try:
+            total = conn.execute(f"SELECT COUNT(*) FROM {tab} WHERE {where}", params).fetchone()[0]
+            linhas = [dict(r) for r in conn.execute(
+                f"SELECT rowid AS id, {', '.join(sel)}, lancado_por, lancado_em "
+                f"FROM {tab} WHERE {where} ORDER BY rowid DESC LIMIT {LIMITE}", params).fetchall()]
+        finally:
+            conn.close()
+        saida[tab] = {"nome": cfg["nome"], "total": total, "limite": LIMITE, "linhas": linhas}
+    return jsonify(saida)
 
 
 @porto.route("/api/porto/veiculos/<placa>")
